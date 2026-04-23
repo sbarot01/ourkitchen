@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SnS Kitchen</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F4F8F4;--warm-white:#F0F6F0;--primary:#2D7A4F;--primary-light:#4CA373;
+    --primary-pale:#DCF0E5;--accent-dark:#5B9E78;--charcoal:#1E2E25;--mid-gray:#7A8C81;
+    --light-gray:#D4E4DA;--shadow:0 2px 16px rgba(45,122,79,0.08);
+    --takeout:#E8762B;--takeout-pale:#FEF0E6;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html{width:100%;overflow-x:hidden;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh;width:100%;max-width:480px;margin:0 auto;overflow-x:hidden;}
+
+  /* HEADER */
+  .app-header{background:var(--warm-white);padding:16px 16px 0;border-bottom:1px solid var(--light-gray);position:sticky;top:0;z-index:100;width:100%;}
+  .app-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--primary);letter-spacing:-0.5px;}
+  .app-subtitle{font-size:12px;color:var(--mid-gray);margin-top:1px;}
+  .sync-status{display:flex;align-items:center;gap:6px;}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0;}
+  .sync-dot.connected{background:var(--primary);}
+  .tab-bar{display:flex;overflow-x:auto;scrollbar-width:none;width:100%;margin-top:4px;}
+  .tab-bar::-webkit-scrollbar{display:none;}
+  .tab{flex:1;min-width:0;padding:10px 4px 9px;text-align:center;font-size:10px;font-weight:500;color:var(--mid-gray);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;}
+  .tab .tab-icon{font-size:16px;}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+
+  /* LAYOUT */
+  .main{padding:16px 14px 100px;width:100%;}
+  .section{display:none;}.section.active{display:block;}
+  .section-title{font-family:'Playfair Display',serif;font-size:21px;font-weight:600;margin-bottom:3px;}
+  .section-desc{font-size:13px;color:var(--mid-gray);margin-bottom:16px;}
+
+  /* INPUTS */
+  .input-row{display:flex;gap:6px;margin-bottom:10px;width:100%;}
+  .input-row input,.input-row select{flex:1;min-width:0;padding:11px 10px;border:1.5px solid var(--light-gray);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;background:white;color:var(--charcoal);outline:none;transition:border-color 0.2s;}
+  .input-row input.qty{flex:0 0 62px;}
+  .input-row input:focus,.input-row select:focus{border-color:var(--primary);}
+  .btn-add{width:44px;height:44px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .form-input{width:100%;padding:11px 12px;border:1.5px solid var(--light-gray);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:white;color:var(--charcoal);outline:none;margin-bottom:10px;transition:border-color 0.2s;}
+  .form-input:focus{border-color:var(--primary);}
+  .form-select{width:100%;padding:11px 12px;border:1.5px solid var(--light-gray);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:white;color:var(--charcoal);outline:none;margin-bottom:10px;transition:border-color 0.2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A8C81' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+  .form-select:focus{border-color:var(--primary);}
+  .form-label{font-size:12px;font-weight:500;color:var(--mid-gray);margin-bottom:5px;display:block;}
+  .form-row{display:flex;gap:8px;margin-bottom:10px;}
+  .form-row>div{flex:1;min-width:0;}
+  .form-row .form-input,.form-row .form-select{margin-bottom:0;}
+  .btn-primary{width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-top:10px;}
+  .btn-primary:disabled{opacity:0.6;cursor:not-allowed;}
+
+  /* PROTEIN CHIPS */
+  .protein-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+  .protein-chip{padding:7px 13px;border-radius:20px;font-size:13px;border:1.5px solid var(--light-gray);background:white;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;user-select:none;}
+  .protein-chip.selected{background:var(--primary);color:white;border-color:var(--primary);}
+
+  /* FILTER BAR */
+  .filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .filter-btn{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--light-gray);background:white;color:var(--mid-gray);transition:all 0.15s;display:flex;align-items:center;gap:5px;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+  .filter-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+  .filter-btn .chevron{font-size:9px;opacity:0.7;}
+
+  /* GROCERY */
+  .grocery-top-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  .btn-coles{padding:9px 16px;background:#8B5E3C;color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;}
+  .grocery-list{display:flex;flex-direction:column;gap:8px;}
+  .cat-group-label{font-size:11px;font-weight:600;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.6px;padding:6px 2px 2px;margin-top:4px;}
+  .grocery-item{background:white;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow);transition:opacity 0.2s;animation:slideIn 0.2s ease;width:100%;}
+  .grocery-item.checked{opacity:0.42;}
+  .grocery-item.checked .item-name{text-decoration:line-through;}
+  .checkbox{width:22px;height:22px;border-radius:50%;border:2px solid var(--light-gray);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+  .checkbox.checked{background:var(--primary);border-color:var(--primary);color:white;font-size:12px;}
+  .item-name{flex:1;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .item-qty{font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-pale);padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+  .item-cat{font-size:11px;padding:2px 7px;border-radius:8px;background:var(--primary-pale);color:var(--primary);font-weight:500;white-space:nowrap;flex-shrink:0;}
+  .item-delete{color:var(--mid-gray);cursor:pointer;font-size:15px;padding:4px;opacity:0.4;flex-shrink:0;}
+  .checked-divider{text-align:center;font-size:11px;color:var(--mid-gray);margin:10px 0 4px;position:relative;}
+  .checked-divider::before,.checked-divider::after{content:'';position:absolute;top:50%;width:35%;height:1px;background:var(--light-gray);}
+  .checked-divider::before{left:0;}.checked-divider::after{right:0;}
+  .clear-checked{width:100%;padding:11px;background:transparent;border:1.5px dashed var(--light-gray);border-radius:12px;font-size:13px;color:var(--mid-gray);cursor:pointer;margin-top:8px;font-family:'DM Sans',sans-serif;}
+
+  /* MEALS */
+  .add-meal-form{background:white;border-radius:16px;padding:15px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .ing-row{display:flex;gap:6px;margin-bottom:6px;width:100%;}
+  .ing-row input{flex:1;min-width:0;padding:9px 10px;border:1.5px solid var(--light-gray);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+  .ing-row input:focus{border-color:var(--primary);}
+  .ing-row input.ing-qty{flex:0 0 62px;}
+  .btn-add-ing{padding:9px 10px;background:var(--primary-pale);color:var(--primary);border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;flex-shrink:0;}
+  .btn-ai-ing{width:100%;padding:9px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-ai-ing:disabled{opacity:0.6;cursor:not-allowed;}
+  .ing-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;min-height:4px;}
+  .ing-chip{display:flex;align-items:center;gap:5px;background:var(--primary-pale);color:var(--primary);padding:4px 10px;border-radius:20px;font-size:12px;flex-shrink:0;}
+  .ing-chip button{background:none;border:none;cursor:pointer;color:var(--primary);font-size:13px;padding:0;line-height:1;}
+  .meals-grid{display:flex;flex-direction:column;gap:10px;}
+  .meal-card{background:white;border-radius:16px;padding:15px;box-shadow:var(--shadow);animation:slideIn 0.2s ease;width:100%;}
+  .meal-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;}
+  .meal-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+  .meal-tag{font-size:11px;padding:3px 8px;border-radius:8px;background:var(--primary-pale);color:var(--primary);font-weight:500;}
+  .meal-tag.fav{background:#FFF3DC;color:#C98B00;}
+  .meal-tag.protein{background:#EDE9FF;color:#6B48D4;}
+  .meal-note{font-size:12px;color:var(--mid-gray);margin-top:5px;font-style:italic;}
+  .meal-ings{margin-top:8px;padding:9px 11px;background:var(--cream);border-radius:10px;font-size:12px;color:#555;line-height:1.8;}
+  .meal-ings strong{display:block;font-size:10px;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+  .meal-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .meal-btn{flex:1;min-width:58px;padding:8px 4px;border:none;border-radius:10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .meal-btn.fav{background:#FFF3DC;color:#C98B00;}
+  .meal-btn.shop{background:var(--primary-pale);color:var(--primary);}
+  .meal-btn.edit{background:#EEF4FF;color:#3B6AC8;}
+  .meal-btn.recipe{background:#F0FFF4;color:#276749;}
+  .meal-btn.del{background:#f0f0f0;color:var(--mid-gray);}
+
+  /* RECIPE VIEW SHEET */
+  .recipe-sheet-meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+  .recipe-sheet-tag{font-size:11px;padding:3px 9px;border-radius:8px;background:var(--primary-pale);color:var(--primary);font-weight:500;}
+  .recipe-sheet-ing-grid{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;}
+  .recipe-sheet-ing-item{display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:var(--cream);border-radius:8px;}
+  .recipe-sheet-ing-item .ing-name{color:var(--charcoal);}
+  .recipe-sheet-ing-item .ing-amt{color:var(--primary);font-weight:500;}
+  .recipe-sheet-step{display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.65;color:#444;}
+  .recipe-sheet-step-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .recipe-section-label{font-size:11px;font-weight:600;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:block;}
+
+  /* EDIT RECIPE SECTION */
+  .edit-recipe-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--light-gray);}
+  .recipe-steps-textarea{width:100%;padding:11px 12px;border:1.5px solid var(--light-gray);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;color:var(--charcoal);outline:none;min-height:120px;resize:vertical;line-height:1.6;transition:border-color 0.2s;}
+  .recipe-steps-textarea:focus{border-color:var(--primary);}
+  .recipe-steps-textarea::placeholder{color:var(--mid-gray);}
+  .btn-ai-recipe{width:100%;padding:9px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-ai-recipe:disabled{opacity:0.6;cursor:not-allowed;}
+  .btn-regenerate{width:100%;padding:8px;background:transparent;color:var(--mid-gray);border:1.5px dashed var(--light-gray);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;}
+  .btn-regenerate:disabled{opacity:0.5;cursor:not-allowed;}
+
+  /* SHEETS */
+  .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+  .sheet-overlay.open{display:flex;}
+  .sheet{background:var(--warm-white);border-radius:24px 24px 0 0;padding:20px 16px 44px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:slideUp 0.3s ease;}
+  .sheet-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .sheet-header h3{font-family:'Playfair Display',serif;font-size:19px;}
+  .sheet-close{background:var(--light-gray);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .filter-option{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:white;border-radius:12px;margin-bottom:7px;cursor:pointer;font-size:14px;box-shadow:var(--shadow);border:1.5px solid transparent;}
+  .filter-option.selected{border-color:var(--primary);background:var(--primary-pale);color:var(--primary);font-weight:500;}
+  .filter-option .check{font-size:14px;color:var(--primary);opacity:0;}
+  .filter-option.selected .check{opacity:1;}
+  .filter-sheet-actions{display:flex;gap:8px;margin-top:14px;}
+  .btn-filter-clear{flex:1;padding:12px;background:#f0f0f0;color:var(--mid-gray);border:none;border-radius:12px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-filter-apply{flex:2;padding:12px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+  /* PLANNER */
+  .planner-toggle{display:flex;background:var(--light-gray);border-radius:12px;padding:3px;margin-bottom:16px;}
+  .planner-toggle-btn{flex:1;padding:8px;text-align:center;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;color:var(--mid-gray);font-family:'DM Sans',sans-serif;border:none;background:transparent;}
+  .planner-toggle-btn.active{background:white;color:var(--primary);box-shadow:var(--shadow);}
+  .week-grid{display:flex;flex-direction:column;gap:10px;}
+  .day-card{background:white;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);width:100%;}
+  .day-header{background:var(--primary);color:white;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;}
+  .day-header.today{background:var(--accent-dark);}
+  .day-name{font-weight:600;font-size:14px;}
+  .day-date{font-size:11px;opacity:0.75;}
+  .day-body{padding:10px 12px 12px;}
+  .day-slot{margin-bottom:7px;}
+  .slot-label{font-size:10px;font-weight:600;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .slot-meal{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:10px;background:var(--cream);font-size:13px;cursor:pointer;border:1.5px dashed var(--light-gray);color:var(--mid-gray);}
+  .slot-meal.filled{background:var(--primary-pale);border-color:var(--primary);color:var(--charcoal);font-weight:500;border-style:solid;}
+  .slot-meal.takeout{background:var(--takeout-pale);border-color:var(--takeout);border-style:solid;color:var(--takeout);font-weight:500;}
+  .slot-clear{margin-left:auto;opacity:0.5;font-size:13px;flex-shrink:0;}
+  .planner-shop-btn{width:100%;margin-top:14px;padding:13px;background:var(--primary);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;}
+
+  /* HISTORY */
+  .history-week{background:white;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:10px;}
+  .history-week-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .history-week-title{font-weight:600;font-size:14px;color:var(--charcoal);}
+  .history-week-subtitle{font-size:11px;color:var(--mid-gray);margin-top:2px;}
+  .history-week-chevron{font-size:12px;color:var(--mid-gray);transition:transform 0.2s;}
+  .history-week-chevron.open{transform:rotate(180deg);}
+  .history-week-body{display:none;border-top:1px solid var(--light-gray);}
+  .history-week-body.open{display:block;}
+  .history-day{padding:10px 14px;border-bottom:1px solid var(--light-gray);}
+  .history-day:last-child{border-bottom:none;}
+  .history-day-name{font-size:12px;font-weight:600;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .history-slot{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:13px;}
+  .history-slot-label{font-size:10px;color:var(--mid-gray);width:60px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.3px;}
+  .history-slot-val{flex:1;color:var(--charcoal);}
+  .history-slot-val.takeout{color:var(--takeout);}
+  .history-slot-val.empty{color:var(--light-gray);font-style:italic;}
+  .history-empty{text-align:center;padding:30px 16px;color:var(--mid-gray);font-size:14px;}
+
+  /* PICKER */
+  .picker-search{width:100%;padding:10px 12px;border:1.5px solid var(--light-gray);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:10px;}
+  .picker-search:focus{border-color:var(--primary);}
+  .picker-item{padding:12px 13px;background:white;border-radius:12px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);transition:background 0.15s;}
+  .picker-item:hover{background:var(--primary-pale);}
+  .picker-takeout-btn{width:100%;padding:13px;background:var(--takeout-pale);color:var(--takeout);border:1.5px solid var(--takeout);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .picker-divider{text-align:center;font-size:11px;color:var(--mid-gray);margin:4px 0 10px;position:relative;}
+  .picker-divider::before,.picker-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--light-gray);}
+  .picker-divider::before{left:0;}.picker-divider::after{right:0;}
+  .picker-clear-btn{width:100%;padding:12px;background:#f0f0f0;color:var(--mid-gray);border:none;border-radius:12px;font-size:14px;cursor:pointer;margin-top:4px;font-family:'DM Sans',sans-serif;}
+
+  /* TAKEOUT NOTE SHEET */
+  .takeout-note-input{width:100%;padding:13px 14px;border:1.5px solid var(--light-gray);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;outline:none;margin-bottom:4px;}
+  .takeout-note-input:focus{border-color:var(--takeout);}
+  .btn-takeout-confirm{width:100%;padding:13px;background:var(--takeout);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-top:10px;}
+
+  /* RECIPES */
+  .recipe-tab-btns{display:flex;gap:8px;margin-bottom:18px;}
+  .recipe-tab-btn{flex:1;padding:14px 10px;border-radius:14px;border:1.5px solid var(--light-gray);background:white;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .recipe-tab-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+  .recipe-tab-btn .rtb-icon{font-size:22px;display:block;margin-bottom:5px;}
+  .recipe-tab-btn .rtb-title{font-size:13px;font-weight:600;display:block;}
+  .recipe-tab-btn .rtb-desc{font-size:11px;opacity:0.7;display:block;margin-top:2px;}
+  .recipe-panel{display:none;}.recipe-panel.active{display:block;}
+  .suggest-selectors{background:white;border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px;}
+  .suggest-selectors h4{font-size:13px;font-weight:600;color:var(--charcoal);margin-bottom:10px;}
+  .selector-row{display:flex;gap:8px;}
+  .selector-row>div{flex:1;min-width:0;}
+  .selector-row .form-select{margin-bottom:0;font-size:13px;}
+  .selector-row .form-label{font-size:11px;}
+  .suggest-card{background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:18px;padding:18px;color:white;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .suggest-card-text h2{font-family:'Playfair Display',serif;font-size:17px;margin-bottom:4px;}
+  .suggest-card-text p{font-size:12px;opacity:0.85;line-height:1.4;}
+  .btn-suggest{background:white;color:var(--primary);border:none;border-radius:12px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .btn-suggest:disabled{opacity:0.6;cursor:not-allowed;}
+  .recipe-card{background:white;border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:12px;animation:slideIn 0.3s ease;}
+  .recipe-card h3{font-family:'Playfair Display',serif;font-size:18px;margin-bottom:6px;}
+  .recipe-card .recipe-why{color:var(--primary);font-size:13px;margin-bottom:8px;font-style:italic;}
+  .recipe-card .recipe-body{font-size:14px;line-height:1.6;color:#444;}
+  .recipe-meta{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+  .recipe-meta-tag{font-size:11px;padding:3px 9px;border-radius:8px;background:var(--primary-pale);color:var(--primary);font-weight:500;}
+  .recipe-ing-list{margin-top:12px;}
+  .recipe-ing-list h4{font-size:12px;font-weight:600;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .recipe-ing-grid{display:flex;flex-direction:column;gap:5px;}
+  .recipe-ing-item{display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:var(--cream);border-radius:8px;}
+  .recipe-ing-item .ing-name{color:var(--charcoal);}
+  .recipe-ing-item .ing-amt{color:var(--primary);font-weight:500;}
+  .recipe-steps{margin-top:12px;}
+  .recipe-steps h4{font-size:12px;font-weight:600;color:var(--mid-gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .recipe-step{display:flex;gap:10px;margin-bottom:8px;font-size:13px;line-height:1.6;color:#444;}
+  .recipe-step-num{width:22px;height:22px;border-radius:50%;background:var(--primary);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .btn-recipe-shop{width:100%;margin-top:12px;padding:10px;background:var(--primary-pale);color:var(--primary);border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .meal-select-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .meal-select-item{background:white;border-radius:12px;padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);border:1.5px solid transparent;transition:all 0.15s;}
+  .meal-select-item.selected{border-color:var(--primary);background:var(--primary-pale);}
+  .meal-select-item .msi-name{font-weight:600;font-size:14px;}
+  .meal-select-item .msi-meta{font-size:12px;color:var(--mid-gray);margin-top:2px;}
+  .loading-dots{display:flex;gap:6px;justify-content:center;padding:20px;}
+  .loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--primary);animation:bounce 1.2s infinite;}
+  .loading-dots span:nth-child(2){animation-delay:0.2s;}
+  .loading-dots span:nth-child(3){animation-delay:0.4s;}
+
+  /* URL IMPORT */
+  .url-import-box{background:white;border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px;}
+  .url-import-box h4{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;margin-bottom:6px;}
+  .url-import-box p{font-size:13px;color:var(--mid-gray);margin-bottom:14px;line-height:1.5;}
+  .url-input-row{display:flex;gap:8px;margin-bottom:0;}
+  .url-input{flex:1;min-width:0;padding:11px 12px;border:1.5px solid var(--light-gray);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+  .url-input:focus{border-color:var(--primary);}
+  .btn-import{padding:11px 16px;background:var(--primary);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .btn-import:disabled{opacity:0.6;cursor:not-allowed;}
+  .url-error-card{background:#FEF2F2;border:1.5px solid #FECACA;border-radius:14px;padding:16px;margin-bottom:12px;animation:slideIn 0.3s ease;}
+  .url-error-card .err-icon{font-size:28px;margin-bottom:8px;}
+  .url-error-card h4{font-size:15px;font-weight:600;color:#B91C1C;margin-bottom:6px;}
+  .url-error-card p{font-size:13px;color:#7F1D1D;line-height:1.5;}
+  .url-error-card ul{font-size:13px;color:#7F1D1D;line-height:1.8;padding-left:18px;margin-top:6px;}
+  .imported-recipe-card{background:white;border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:12px;animation:slideIn 0.3s ease;}
+  .imported-recipe-card h3{font-family:'Playfair Display',serif;font-size:19px;margin-bottom:6px;}
+  .imported-source{font-size:11px;color:var(--mid-gray);margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+  .imported-source a{color:var(--primary);text-decoration:none;font-weight:500;}
+  .btn-save-as-meal{width:100%;padding:12px;background:var(--primary);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-save-as-meal:disabled{opacity:0.6;cursor:not-allowed;}
+  .save-meal-success{display:flex;align-items:center;gap:8px;background:var(--primary-pale);border-radius:10px;padding:11px 14px;margin-top:8px;font-size:13px;color:var(--primary);font-weight:500;}
+
+  /* SETTINGS */
+  .settings-card{background:white;border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:13px;}
+  .settings-card h3{font-size:15px;font-weight:600;margin-bottom:5px;}
+  .settings-card p{font-size:12px;color:var(--mid-gray);margin-bottom:11px;line-height:1.5;}
+  .api-row{display:flex;gap:8px;}
+  .api-row input{flex:1;min-width:0;padding:10px 11px;border:1.5px solid var(--light-gray);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+  .api-row input:focus{border-color:var(--primary);}
+  .btn-save{padding:10px 14px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;flex-shrink:0;}
+  .fb-card{background:var(--primary-pale);border-radius:16px;padding:16px;margin-bottom:13px;}
+  .fb-card h3{font-size:15px;font-weight:600;margin-bottom:5px;color:var(--primary);}
+  .fb-card p{font-size:12px;color:#555;margin-bottom:11px;line-height:1.5;}
+  .fb-card .form-input{margin-bottom:8px;font-size:13px;}
+  .pref-title{font-weight:600;font-size:15px;margin-bottom:9px;margin-top:16px;}
+  .pref-chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .pref-chip{padding:7px 13px;border-radius:20px;font-size:13px;border:1.5px solid var(--light-gray);background:white;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+  .pref-chip.active{background:var(--primary);color:white;border-color:var(--primary);}
+  .pref-chip.active.avoid{background:#C0392B;border-color:#C0392B;}
+
+  /* UTILS */
+  .empty-state{text-align:center;padding:36px 16px;color:var(--mid-gray);}
+  .empty-icon{font-size:44px;margin-bottom:10px;}
+  .empty-state p{font-size:14px;line-height:1.6;}
+  .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--charcoal);color:white;padding:10px 18px;border-radius:20px;font-size:13px;z-index:400;animation:toastIn 0.2s ease;pointer-events:none;white-space:nowrap;max-width:90vw;}
+
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+  @keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:4px">
+    <div><div class="app-title">🥘 SnS Kitchen</div><div class="app-subtitle">Our shared family food hub</div></div>
+    <div class="sync-status"><div class="sync-dot" id="syncDot"></div><span id="syncLabel" style="font-size:11px;color:var(--mid-gray)">Not synced</span></div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('grocery')"><span class="tab-icon">🛒</span>Groceries</div>
+    <div class="tab" onclick="switchTab('meals')"><span class="tab-icon">🍽️</span>Meals</div>
+    <div class="tab" onclick="switchTab('planner')"><span class="tab-icon">📅</span>Planner</div>
+    <div class="tab" onclick="switchTab('recipes')"><span class="tab-icon">📖</span>Recipes</div>
+    <div class="tab" onclick="switchTab('prefs')"><span class="tab-icon">⚙️</span>Settings</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ── GROCERY ── -->
+<div class="section active" id="section-grocery">
+  <div class="section-title">Grocery List</div>
+  <div class="section-desc">Add items — both phones update in real time</div>
+  <div class="input-row">
+    <input type="text" id="groceryInput" placeholder="Item name..." style="flex:2;min-width:0" onkeydown="if(event.key==='Enter')addGrocery()">
+    <input type="text" id="groceryQty" class="qty" placeholder="Qty">
+    <select id="groceryCat" style="flex:0 0 auto;max-width:110px">
+      <option value="Produce">🥦 Produce</option>
+      <option value="Pantry">🫙 Pantry</option>
+      <option value="Meat">🥩 Meat</option>
+      <option value="Seafood">🐟 Seafood</option>
+      <option value="Frozen">❄️ Frozen</option>
+      <option value="Dairy">🧀 Dairy</option>
+      <option value="Bakery">🍞 Bakery</option>
+      <option value="Drinks">🥤 Drinks</option>
+      <option value="Other">📦 Other</option>
+    </select>
+    <button class="btn-add" onclick="addGrocery()">+</button>
+  </div>
+  <div class="grocery-top-bar">
+    <div class="filter-btn" id="groceryCatFilterBtn" onclick="openFilterSheet('groceryCat')" style="flex:1">Category <span class="chevron">▼</span></div>
+    <button class="btn-coles" onclick="addColesFood()">🐾 Cole's Food</button>
+  </div>
+  <div class="grocery-list" id="groceryList"></div>
+  <button class="clear-checked" onclick="clearChecked()">Clear checked items</button>
+</div>
+
+<!-- ── MEALS ── -->
+<div class="section" id="section-meals">
+  <div class="section-title">Our Meals</div>
+  <div class="section-desc">Save meals with ingredients — tap 🛒 Shop to send to your list</div>
+  <div class="add-meal-form">
+    <label class="form-label">Meal name</label>
+    <input class="form-input" id="mealName" placeholder="e.g. Turkey Burger">
+    <div class="form-row">
+      <div><label class="form-label">Cuisine</label>
+        <select class="form-select" id="mealCuisine">
+          <option value="">Select cuisine...</option>
+          <option>American</option><option>Italian</option><option>Asian</option><option>Mexican</option>
+          <option>Mediterranean</option><option>Indian</option><option>Thai</option><option>Japanese</option>
+          <option>Chinese</option><option>Greek</option><option>French</option><option>Middle Eastern</option>
+          <option>Caribbean</option><option>African</option>
+        </select>
+      </div>
+      <div><label class="form-label">Cook time</label><input class="form-input" id="mealTime" placeholder="30 mins"></div>
+    </div>
+    <label class="form-label">Notes (optional)</label>
+    <input class="form-input" id="mealNote" placeholder="What we love about it...">
+    <label class="form-label">Protein</label>
+    <div class="protein-grid" id="addProteinGrid">
+      <div class="protein-chip" data-val="Vegetarian" onclick="toggleProtein(this,'add')">🥦 Vegetarian</div>
+      <div class="protein-chip" data-val="Chicken" onclick="toggleProtein(this,'add')">🍗 Chicken</div>
+      <div class="protein-chip" data-val="Turkey" onclick="toggleProtein(this,'add')">🦃 Turkey</div>
+      <div class="protein-chip" data-val="Shrimp" onclick="toggleProtein(this,'add')">🍤 Shrimp</div>
+      <div class="protein-chip" data-val="Beef" onclick="toggleProtein(this,'add')">🥩 Beef</div>
+      <div class="protein-chip" data-val="Lamb" onclick="toggleProtein(this,'add')">🫙 Lamb</div>
+      <div class="protein-chip" data-val="Goat" onclick="toggleProtein(this,'add')">🐐 Goat</div>
+      <div class="protein-chip" data-val="Lobster" onclick="toggleProtein(this,'add')">🦞 Lobster</div>
+      <div class="protein-chip" data-val="Seafood" onclick="toggleProtein(this,'add')">🐟 Seafood</div>
+    </div>
+    <label class="form-label" style="margin-top:4px">Ingredients</label>
+    <button class="btn-ai-ing" id="aiIngBtn" onclick="aiPopulateIngredients()">✨ Auto-fill ingredients with AI</button>
+    <div class="ing-row">
+      <input type="text" id="ingName" placeholder="Ingredient..." onkeydown="if(event.key==='Enter')addIng()">
+      <input type="text" id="ingQty" class="ing-qty" placeholder="Qty">
+      <button class="btn-add-ing" onclick="addIng()">+ Add</button>
+    </div>
+    <div class="ing-chips" id="ingChips"></div>
+    <button class="btn-primary" onclick="addMeal()">Save Meal</button>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-btn" id="favFilterBtn" onclick="toggleFavFilter()">⭐ Favorites</div>
+    <div class="filter-btn" id="cuisineFilterBtn" onclick="openFilterSheet('mealCuisine')">Cuisine <span class="chevron">▼</span></div>
+    <div class="filter-btn" id="proteinFilterBtn" onclick="openFilterSheet('mealProtein')">Protein <span class="chevron">▼</span></div>
+  </div>
+  <div class="meals-grid" id="mealsList"></div>
+</div>
+
+<!-- ── PLANNER ── -->
+<div class="section" id="section-planner">
+  <div class="section-title">Weekly Planner</div>
+  <div class="planner-toggle">
+    <button class="planner-toggle-btn active" id="plannerToggleThis" onclick="switchPlannerView('this')">This Week</button>
+    <button class="planner-toggle-btn" id="plannerToggleHistory" onclick="switchPlannerView('history')">Past Weeks</button>
+  </div>
+  <div id="plannerThisWeek">
+    <div class="section-desc" style="margin-top:-8px">Plan your meals — tap a slot to assign</div>
+    <div class="week-grid" id="weekGrid"></div>
+    <button class="planner-shop-btn" onclick="addPlannerToGroceries()">🛒 Add This Week's Ingredients to Grocery List</button>
+  </div>
+  <div id="plannerHistory" style="display:none">
+    <div class="section-desc" style="margin-top:-8px">Last 4 weeks of meal history</div>
+    <div id="historyGrid"></div>
+  </div>
+</div>
+
+<!-- ── RECIPES ── -->
+<div class="section" id="section-recipes">
+  <div class="section-title">Recipes</div>
+  <div class="section-desc">Get AI-powered recipe ideas tailored to you</div>
+  <div class="recipe-tab-btns">
+    <div class="recipe-tab-btn active" id="rtb-suggest" onclick="switchRecipePanel('suggest')">
+      <span class="rtb-icon">✨</span><span class="rtb-title">Suggest for Us</span><span class="rtb-desc">Based on our taste</span>
+    </div>
+    <div class="recipe-tab-btn" id="rtb-lookup" onclick="switchRecipePanel('lookup')">
+      <span class="rtb-icon">🔍</span><span class="rtb-title">Lookup a Meal</span><span class="rtb-desc">Get recipe for a saved meal</span>
+    </div>
+    <div class="recipe-tab-btn" id="rtb-import" onclick="switchRecipePanel('import')">
+      <span class="rtb-icon">🔗</span><span class="rtb-title">Import URL</span><span class="rtb-desc">Paste a recipe link</span>
+    </div>
+  </div>
+  <div class="recipe-panel active" id="panel-suggest">
+    <div class="suggest-selectors">
+      <h4>Narrow the suggestions (optional)</h4>
+      <div class="selector-row">
+        <div><label class="form-label">🥦 Feature a veggie</label>
+          <select class="form-select" id="suggestVeggie">
+            <option value="">Any / surprise us</option>
+            <option>Broccoli</option><option>Spinach</option><option>Kale</option><option>Brussels Sprouts</option>
+            <option>Asparagus</option><option>Cauliflower</option><option>Zucchini</option><option>Bell Pepper</option>
+            <option>Sweet Potato</option><option>Green Beans</option><option>Cabbage</option><option>Eggplant</option>
+            <option>Beets</option><option>Carrots</option><option>Snap Peas</option><option>Artichoke</option>
+            <option>Bok Choy</option><option>Butternut Squash</option><option>Swiss Chard</option><option>Arugula</option>
+          </select>
+        </div>
+        <div><label class="form-label">🥩 Feature a protein</label>
+          <select class="form-select" id="suggestProtein">
+            <option value="">Any / surprise us</option>
+            <option>Vegetarian</option><option>Chicken</option><option>Turkey</option><option>Shrimp</option>
+            <option>Beef</option><option>Lamb</option><option>Goat</option><option>Lobster</option><option>Seafood</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="suggest-card">
+      <div class="suggest-card-text"><h2>Suggest Recipes ✨</h2><p>Personalized to your taste, pantry &amp; preferences</p></div>
+      <button class="btn-suggest" id="suggestBtn" onclick="suggestRecipes()">Suggest</button>
+    </div>
+    <div id="suggestResults"></div>
+  </div>
+  <div class="recipe-panel" id="panel-lookup">
+    <div style="background:white;border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px">
+      <p style="font-size:13px;color:var(--mid-gray);margin-bottom:12px">Pick one of your saved meals and we'll get a full recipe for it</p>
+      <div class="meal-select-list" id="mealSelectList"></div>
+      <button class="btn-primary" id="lookupBtn" onclick="lookupRecipe()" style="margin-top:4px" disabled>Get Recipe</button>
+    </div>
+    <div id="lookupResults"></div>
+  </div>
+
+  <!-- URL IMPORT PANEL -->
+  <div class="recipe-panel" id="panel-import">
+    <div class="url-import-box">
+      <h4>🔗 Import from a Recipe URL</h4>
+      <p>Paste a link from AllRecipes, Food Network, Serious Eats, Bon Appétit, and most other recipe sites. Claude will read the page and extract everything for you.</p>
+      <div class="url-input-row">
+        <input type="url" class="url-input" id="recipeUrlInput" placeholder="https://www.allrecipes.com/..." onkeydown="if(event.key==='Enter')importRecipeUrl()">
+        <button class="btn-import" id="importBtn" onclick="importRecipeUrl()">Import</button>
+      </div>
+    </div>
+    <div id="importResults"></div>
+  </div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div class="section" id="section-prefs">
+  <div class="section-title">Settings</div>
+  <div class="section-desc">Configure your preferences and connections</div>
+  <div class="settings-card">
+    <h3>🤖 Claude AI Key</h3>
+    <p>Needed for recipe suggestions and AI ingredient auto-fill. Get yours at <strong>console.anthropic.com</strong></p>
+    <div class="api-row"><input type="password" id="apiKeyInput" placeholder="sk-ant-..."><button class="btn-save" onclick="saveApiKey()">Save</button></div>
+  </div>
+  <div class="fb-card">
+    <h3>🔥 Firebase Sync</h3>
+    <p>Connect Firebase for real-time sync between both phones.</p>
+    <input class="form-input" id="fbApiKey" placeholder="Firebase API Key">
+    <input class="form-input" id="fbProjectId" placeholder="Project ID">
+    <input class="form-input" id="fbAppId" placeholder="App ID">
+    <button class="btn-primary" onclick="initFirebase()" style="margin-top:0">Connect Firebase</button>
+    <div style="margin-top:12px;padding:11px;background:white;border-radius:10px;font-size:12px;color:#555;line-height:1.75">
+      <strong>Quick Setup (5 min):</strong><br>
+      1. Go to <strong>firebase.google.com</strong> → Create project<br>
+      2. Add a Web App → copy the config values<br>
+      3. Firestore Database → Create database (test mode)<br>
+      4. Paste config above and hit Connect
+    </div>
+  </div>
+  <div class="settings-card">
+    <div class="pref-title" style="margin-top:0">Dietary Restrictions</div>
+    <div class="pref-chips" id="restrictionChips">
+      <div class="pref-chip active avoid" data-val="no pork" onclick="togglePref(this,'restrictions')">🐷 No Pork</div>
+      <div class="pref-chip" data-val="vegetarian" onclick="togglePref(this,'restrictions')">🥗 Vegetarian</div>
+      <div class="pref-chip" data-val="vegan" onclick="togglePref(this,'restrictions')">🌱 Vegan</div>
+      <div class="pref-chip" data-val="gluten free" onclick="togglePref(this,'restrictions')">🌾 Gluten-Free</div>
+      <div class="pref-chip" data-val="dairy free" onclick="togglePref(this,'restrictions')">🥛 Dairy-Free</div>
+      <div class="pref-chip" data-val="nut free" onclick="togglePref(this,'restrictions')">🥜 Nut-Free</div>
+    </div>
+    <div class="pref-title">We Love</div>
+    <div class="pref-chips" id="loveChips">
+      <div class="pref-chip" data-val="spicy food" onclick="togglePref(this,'loves')">🌶️ Spicy</div>
+      <div class="pref-chip" data-val="quick meals under 30 minutes" onclick="togglePref(this,'loves')">⚡ Quick</div>
+      <div class="pref-chip" data-val="comfort food" onclick="togglePref(this,'loves')">🤗 Comfort food</div>
+      <div class="pref-chip" data-val="healthy options" onclick="togglePref(this,'loves')">💪 Healthy</div>
+      <div class="pref-chip" data-val="Italian cuisine" onclick="togglePref(this,'loves')">🍝 Italian</div>
+      <div class="pref-chip" data-val="Asian cuisine" onclick="togglePref(this,'loves')">🍜 Asian</div>
+      <div class="pref-chip" data-val="Mexican cuisine" onclick="togglePref(this,'loves')">🌮 Mexican</div>
+      <div class="pref-chip" data-val="Mediterranean cuisine" onclick="togglePref(this,'loves')">🫒 Mediterranean</div>
+    </div>
+  </div>
+</div>
+</div><!-- /main -->
+
+<!-- EDIT MEAL SHEET -->
+<div class="sheet-overlay" id="editOverlay" onclick="closeEdit(event)">
+  <div class="sheet">
+    <div class="sheet-header"><h3>Edit Meal</h3><button class="sheet-close" onclick="closeEditForce()">✕</button></div>
+    <label class="form-label">Meal name</label><input class="form-input" id="editMealName" placeholder="Meal name">
+    <div class="form-row">
+      <div><label class="form-label">Cuisine</label>
+        <select class="form-select" id="editCuisine">
+          <option value="">Select cuisine...</option>
+          <option>American</option><option>Italian</option><option>Asian</option><option>Mexican</option>
+          <option>Mediterranean</option><option>Indian</option><option>Thai</option><option>Japanese</option>
+          <option>Chinese</option><option>Greek</option><option>French</option><option>Middle Eastern</option>
+          <option>Caribbean</option><option>African</option>
+        </select>
+      </div>
+      <div><label class="form-label">Cook time</label><input class="form-input" id="editTime" placeholder="30 mins"></div>
+    </div>
+    <label class="form-label">Notes</label><input class="form-input" id="editNote" placeholder="What we love about it...">
+    <label class="form-label">Protein</label>
+    <div class="protein-grid" id="editProteinGrid">
+      <div class="protein-chip" data-val="Vegetarian" onclick="toggleProtein(this,'edit')">🥦 Vegetarian</div>
+      <div class="protein-chip" data-val="Chicken" onclick="toggleProtein(this,'edit')">🍗 Chicken</div>
+      <div class="protein-chip" data-val="Turkey" onclick="toggleProtein(this,'edit')">🦃 Turkey</div>
+      <div class="protein-chip" data-val="Shrimp" onclick="toggleProtein(this,'edit')">🍤 Shrimp</div>
+      <div class="protein-chip" data-val="Beef" onclick="toggleProtein(this,'edit')">🥩 Beef</div>
+      <div class="protein-chip" data-val="Lamb" onclick="toggleProtein(this,'edit')">🫙 Lamb</div>
+      <div class="protein-chip" data-val="Goat" onclick="toggleProtein(this,'edit')">🐐 Goat</div>
+      <div class="protein-chip" data-val="Lobster" onclick="toggleProtein(this,'edit')">🦞 Lobster</div>
+      <div class="protein-chip" data-val="Seafood" onclick="toggleProtein(this,'edit')">🐟 Seafood</div>
+    </div>
+    <label class="form-label" style="margin-top:8px">Ingredients</label>
+    <div class="ing-row">
+      <input type="text" id="editIngName" placeholder="Add ingredient..." onkeydown="if(event.key==='Enter')addEditIng()">
+      <input type="text" id="editIngQty" class="ing-qty" placeholder="Qty">
+      <button class="btn-add-ing" onclick="addEditIng()">+ Add</button>
+    </div>
+    <div class="ing-chips" id="editIngChips" style="margin-top:8px;margin-bottom:4px"></div>
+
+    <!-- RECIPE STEPS SECTION -->
+    <div class="edit-recipe-section">
+      <span class="recipe-section-label">📖 Recipe / Instructions</span>
+      <button class="btn-ai-recipe" id="editGenerateRecipeBtn" onclick="generateEditRecipe(false)">✨ Generate Recipe with AI</button>
+      <button class="btn-regenerate" id="editRegenerateBtn" onclick="generateEditRecipe(true)">🔄 Regenerate with AI</button>
+      <textarea class="recipe-steps-textarea" id="editSteps" placeholder="Enter step-by-step instructions here, one step per line.&#10;&#10;e.g.&#10;Preheat oven to 375°F.&#10;Season chicken with salt and pepper.&#10;Heat oil in a skillet over medium-high heat..."></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="saveEditMeal()">Save Changes</button>
+  </div>
+</div>
+
+<!-- RECIPE VIEW SHEET -->
+<div class="sheet-overlay" id="recipeSheetOverlay" onclick="closeRecipeSheet(event)">
+  <div class="sheet" id="recipeSheet">
+    <div class="sheet-header">
+      <h3 id="recipeSheetTitle">Recipe</h3>
+      <button class="sheet-close" onclick="closeRecipeSheetForce()">✕</button>
+    </div>
+    <div id="recipeSheetContent"></div>
+    <button class="btn-recipe-shop" id="recipeSheetShopBtn" style="margin-top:4px;display:none" onclick="shopFromRecipeSheet()">🛒 Add ingredients to grocery list</button>
+  </div>
+</div>
+
+<!-- FILTER SHEET -->
+<div class="sheet-overlay" id="filterOverlay" onclick="closeFilterSheet(event)">
+  <div class="sheet">
+    <div class="sheet-header"><h3 id="filterSheetTitle">Filter</h3><button class="sheet-close" onclick="closeFilterSheetForce()">✕</button></div>
+    <div id="filterSheetOptions"></div>
+    <div class="filter-sheet-actions">
+      <button class="btn-filter-clear" onclick="clearFilterSel()">Clear</button>
+      <button class="btn-filter-apply" onclick="applyFilter()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEAL PICKER SHEET -->
+<div class="sheet-overlay" id="pickerOverlay" onclick="closePicker(event)">
+  <div class="sheet">
+    <div class="sheet-header"><h3>Pick a Meal</h3><button class="sheet-close" onclick="closePickerForce()">✕</button></div>
+    <!-- Takeout button -->
+    <button class="picker-takeout-btn" onclick="promptTakeout()">🥡 Mark as Takeout / Eating Out</button>
+    <div class="picker-divider">or choose a home meal</div>
+    <div class="filter-bar" style="margin-bottom:10px">
+      <div class="filter-btn" id="pickerFavBtn" onclick="togglePickerFav()">⭐ Favs</div>
+      <div class="filter-btn" id="pickerCuisineBtn" onclick="openPickerFilter('cuisine')">Cuisine <span class="chevron">▼</span></div>
+      <div class="filter-btn" id="pickerProteinBtn" onclick="openPickerFilter('protein')">Protein <span class="chevron">▼</span></div>
+    </div>
+    <input type="text" class="picker-search" id="pickerSearch" placeholder="Search meals..." oninput="renderPickerList()">
+    <div id="pickerList"></div>
+    <button class="picker-clear-btn" onclick="clearPickerSlot()">Clear this slot</button>
+  </div>
+</div>
+
+<!-- TAKEOUT NOTE SHEET -->
+<div class="sheet-overlay" id="takeoutOverlay" onclick="closeTakeoutSheet(event)">
+  <div class="sheet">
+    <div class="sheet-header"><h3>🥡 Takeout / Eating Out</h3><button class="sheet-close" onclick="closeTakeoutSheetForce()">✕</button></div>
+    <p style="font-size:13px;color:var(--mid-gray);margin-bottom:14px">Add an optional note — restaurant name, cuisine, etc.</p>
+    <label class="form-label">Note (optional)</label>
+    <input type="text" class="takeout-note-input" id="takeoutNote" placeholder="e.g. Date night at Thai place...">
+    <button class="btn-takeout-confirm" onclick="confirmTakeout()">Confirm Takeout</button>
+  </div>
+</div>
+
+<!-- PICKER FILTER SUB-SHEET -->
+<div class="sheet-overlay" id="pickerFilterOverlay" onclick="closePickerFilterSheet(event)">
+  <div class="sheet">
+    <div class="sheet-header"><h3 id="pickerFilterTitle">Filter</h3><button class="sheet-close" onclick="closePickerFilterSheetForce()">✕</button></div>
+    <div id="pickerFilterOptions"></div>
+    <div class="filter-sheet-actions">
+      <button class="btn-filter-clear" onclick="clearPickerFilter()">Clear</button>
+      <button class="btn-filter-apply" onclick="applyPickerFilter()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ── CONSTANTS ─────────────────────────────────────────────────
+const PROTEINS=['Vegetarian','Chicken','Turkey','Shrimp','Beef','Lamb','Goat','Lobster','Seafood'];
+const CUISINES=['American','Italian','Asian','Mexican','Mediterranean','Indian','Thai','Japanese','Chinese','Greek','French','Middle Eastern','Caribbean','African'];
+const CAT_ORDER=['Produce','Pantry','Meat','Seafood','Frozen','Dairy','Bakery','Drinks','Other'];
+const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const SLOTS=['Breakfast','Lunch','Dinner'];
+const PROTEIN_ICONS={Vegetarian:'🥦',Chicken:'🍗',Turkey:'🦃',Shrimp:'🍤',Beef:'🥩',Lamb:'🫙',Goat:'🐐',Lobster:'🦞',Seafood:'🐟'};
+const MAX_HISTORY_WEEKS=4;
+
+// ── STATE ─────────────────────────────────────────────────────
+let groceries=JSON.parse(localStorage.getItem('ok_groceries')||'[]');
+let meals    =JSON.parse(localStorage.getItem('ok_meals')    ||'[]');
+let prefs    =JSON.parse(localStorage.getItem('ok_prefs')    ||'{"restrictions":["no pork"],"loves":[]}');
+let planner  =JSON.parse(localStorage.getItem('ok_planner')  ||'{}'); // keyed by dayKey_slot
+let history  =JSON.parse(localStorage.getItem('ok_history')  ||'{}'); // keyed by weekMonday -> {dayKey_slot: entry}
+
+let pendingIngs=[],editMealId=null,editIngs=[],editProteins=[],addProteins=[];
+let groceryCatFilter='All';
+let mealFilters={fav:false,cuisine:[],protein:[]};
+let pickerTarget=null,pickerFilters={fav:false,cuisine:[],protein:[]};
+let activeFilterCtx=null,tempFilterSel=[];
+let activePickerFilterType=null,tempPickerFilterSel=[];
+let selectedLookupMealId=null;
+let plannerView='this';
+
+if(localStorage.getItem('ok_apikey'))document.getElementById('apiKeyInput').value=localStorage.getItem('ok_apikey');
+
+// ── FIREBASE ──────────────────────────────────────────────────
+window.initFirebase=async function(){
+  const k=document.getElementById('fbApiKey').value.trim(),p=document.getElementById('fbProjectId').value.trim(),a=document.getElementById('fbAppId').value.trim();
+  if(!k||!p||!a){showToast('Fill all Firebase fields');return;}
+  try{
+    const{initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const fs=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const db=fs.getFirestore(initializeApp({apiKey:k,projectId:p,appId:a}));
+    window._db=db;window._fs=fs;
+    fs.onSnapshot(fs.collection(db,'groceries'),s=>{groceries=s.docs.map(d=>({id:d.id,...d.data()}));save('groceries');renderGroceries();});
+    fs.onSnapshot(fs.collection(db,'meals'),    s=>{meals    =s.docs.map(d=>({id:d.id,...d.data()}));save('meals');    renderMeals();renderMealSelectList();});
+    fs.onSnapshot(fs.collection(db,'planner'),  s=>{s.docs.forEach(d=>{planner[d.id]=d.data();});save('planner');if(plannerView==='this')renderPlanner();});
+    fs.onSnapshot(fs.collection(db,'history'),  s=>{s.docs.forEach(d=>{history[d.id]=d.data();});save('history');if(plannerView==='history')renderHistory();});
+    fs.onSnapshot(fs.collection(db,'prefs'),    s=>{if(!s.empty){prefs=s.docs[0].data();save('prefs');renderPrefChips();}});
+    localStorage.setItem('ok_fb',JSON.stringify({k,p,a}));
+    document.getElementById('syncDot').classList.add('connected');
+    document.getElementById('syncLabel').textContent='Live sync on';
+    showToast('🔥 Firebase connected!');
+  }catch(e){showToast('Firebase error: '+e.message);}
+};
+const sf=localStorage.getItem('ok_fb');
+if(sf){const fb=JSON.parse(sf);document.getElementById('fbApiKey').value=fb.k;document.getElementById('fbProjectId').value=fb.p;document.getElementById('fbAppId').value=fb.a;setTimeout(()=>window.initFirebase(),500);}
+async function fsSet(col,id,data){if(!window._db)return;await window._fs.setDoc(window._fs.doc(window._db,col,id),data);}
+async function fsDel(col,id){if(!window._db)return;await window._fs.deleteDoc(window._fs.doc(window._db,col,id));}
+
+// ── TABS ──────────────────────────────────────────────────────
+window.switchTab=function(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.tab')[['grocery','meals','planner','recipes','prefs'].indexOf(name)].classList.add('active');
+  if(name==='planner'){archiveOldWeeks();renderPlanner();}
+  if(name==='recipes')renderMealSelectList();
+};
+
+// ── GROCERY ───────────────────────────────────────────────────
+window.addGrocery=async function(nameArg,qtyArg,catArg){
+  const name=nameArg||document.getElementById('groceryInput').value.trim();
+  const qty=qtyArg!==undefined?qtyArg:document.getElementById('groceryQty').value.trim();
+  const cat=catArg||document.getElementById('groceryCat').value;
+  if(!name)return;
+  const item={id:Date.now().toString(36)+Math.random().toString(36).slice(2),name,qty,cat,checked:false,ts:Date.now()};
+  groceries.push(item);
+  if(!nameArg){document.getElementById('groceryInput').value='';document.getElementById('groceryQty').value='';}
+  save('groceries');renderGroceries();await fsSet('groceries',item.id,item);
+};
+window.addColesFood=async function(){
+  for(const i of [{name:'Sweet Potato',qty:'',cat:'Produce'},{name:'Frozen Green Beans',qty:'',cat:'Frozen'},{name:'Frozen Salmon',qty:'',cat:'Frozen'},{name:'Frozen Cod',qty:'',cat:'Frozen'}]){
+    await window.addGrocery(i.name,i.qty,i.cat);await delay(30);
+  }
+  showToast('🐾 Cole\'s food added!');
+};
+window.toggleGrocery=async function(id){const g=groceries.find(g=>g.id===id);if(!g)return;g.checked=!g.checked;save('groceries');renderGroceries();await fsSet('groceries',id,g);};
+window.deleteGrocery=async function(id){groceries=groceries.filter(g=>g.id!==id);save('groceries');renderGroceries();await fsDel('groceries',id);};
+window.clearChecked=async function(){const del=groceries.filter(g=>g.checked);groceries=groceries.filter(g=>!g.checked);save('groceries');renderGroceries();for(const g of del)await fsDel('groceries',g.id);};
+
+function renderGroceries(){
+  const list=document.getElementById('groceryList');
+  let items=groceryCatFilter==='All'?groceries:groceries.filter(g=>g.cat===groceryCatFilter);
+  const unc=items.filter(g=>!g.checked),chk=items.filter(g=>g.checked);
+  if(!items.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">🛒</div><p>Your list is empty.<br>Add items above!</p></div>`;return;}
+  let html='';
+  const groups={};
+  unc.forEach(g=>{if(!groups[g.cat])groups[g.cat]=[];groups[g.cat].push(g);});
+  CAT_ORDER.forEach(cat=>{if(groups[cat]?.length){html+=`<div class="cat-group-label">${catIcon(cat)} ${cat}</div>`;html+=groups[cat].map(grocHTML).join('');}});
+  Object.keys(groups).forEach(cat=>{if(!CAT_ORDER.includes(cat)){html+=`<div class="cat-group-label">${catIcon(cat)} ${cat}</div>`;html+=groups[cat].map(grocHTML).join('');}});
+  if(chk.length)html+=`<div class="checked-divider">✓ checked (${chk.length})</div>`+chk.map(grocHTML).join('');
+  list.innerHTML=html;
+}
+function grocHTML(g){return `<div class="grocery-item${g.checked?' checked':''}"><div class="checkbox${g.checked?' checked':''}" onclick="toggleGrocery('${g.id}')">${g.checked?'✓':''}</div><span class="item-name">${g.name}</span>${g.qty?`<span class="item-qty">${g.qty}</span>`:''}<span class="item-cat">${g.cat}</span><span class="item-delete" onclick="deleteGrocery('${g.id}')">✕</span></div>`;}
+function catIcon(c){return{Produce:'🥦',Pantry:'🫙',Meat:'🥩',Seafood:'🐟',Frozen:'❄️',Dairy:'🧀',Bakery:'🍞',Drinks:'🥤',Other:'📦'}[c]||'📦';}
+
+// ── INGREDIENT CATEGORIZATION ─────────────────────────────────
+const ING_DICT={
+  // Produce
+  apple:'Produce',apples:'Produce',avocado:'Produce',avocados:'Produce',banana:'Produce',bananas:'Produce',
+  basil:'Produce',beet:'Produce',beets:'Produce','bell pepper':'Produce','bell peppers':'Produce',
+  blueberries:'Produce',blueberry:'Produce',broccoli:'Produce','brussels sprouts':'Produce',
+  cabbage:'Produce',carrot:'Produce',carrots:'Produce',cauliflower:'Produce',celery:'Produce',
+  cherry:'Produce',cherries:'Produce',cilantro:'Produce',corn:'Produce',cucumber:'Produce',
+  eggplant:'Produce',garlic:'Produce','garlic cloves':'Produce','green beans':'Produce',
+  'green onion':'Produce','green onions':'Produce',herb:'Produce',herbs:'Produce',jalapeño:'Produce',
+  jalapeno:'Produce',kale:'Produce',lemon:'Produce',lemons:'Produce',lettuce:'Produce',lime:'Produce',
+  limes:'Produce',mango:'Produce',mint:'Produce',mushroom:'Produce',mushrooms:'Produce',
+  onion:'Produce',onions:'Produce',orange:'Produce',oranges:'Produce',parsley:'Produce',
+  peach:'Produce',peaches:'Produce',pear:'Produce',pears:'Produce',pepper:'Produce',peppers:'Produce',
+  pineapple:'Produce',potato:'Produce',potatoes:'Produce',radish:'Produce',raspberry:'Produce',
+  raspberries:'Produce',rosemary:'Produce',scallion:'Produce',scallions:'Produce',shallot:'Produce',
+  shallots:'Produce',spinach:'Produce',squash:'Produce',strawberry:'Produce',strawberries:'Produce',
+  'sweet potato':'Produce','sweet potatoes':'Produce',thyme:'Produce',tomato:'Produce',tomatoes:'Produce',
+  zucchini:'Produce','cherry tomatoes':'Produce','grape tomatoes':'Produce','snap peas':'Produce',
+  'bok choy':'Produce','butternut squash':'Produce','swiss chard':'Produce',arugula:'Produce',
+  asparagus:'Produce','artichoke':'Produce','broccolini':'Produce','leek':'Produce','leeks':'Produce',
+  // Meat
+  bacon:'Meat',beef:'Meat','beef broth':'Pantry','chicken breast':'Meat','chicken breasts':'Meat',
+  'chicken thighs':'Meat','chicken thigh':'Meat','chicken leg':'Meat','chicken legs':'Meat',
+  'chicken wings':'Meat',chicken:'Meat','ground beef':'Meat','ground turkey':'Meat',
+  'ground chicken':'Meat','ground lamb':'Meat',ham:'Meat',lamb:'Meat','lamb chops':'Meat',
+  'pork chop':'Meat','pork chops':'Meat','pork loin':'Meat',prosciutto:'Meat',
+  'rack of lamb':'Meat',salami:'Meat',sausage:'Meat',steak:'Meat',turkey:'Meat',
+  'turkey breast':'Meat','turkey cutlets':'Meat',veal:'Meat','whole chicken':'Meat',
+  'chicken tenders':'Meat','chicken cutlets':'Meat','deli meat':'Meat','hot dog':'Meat','hot dogs':'Meat',
+  // Seafood
+  anchovy:'Seafood',anchovies:'Seafood',clam:'Seafood',clams:'Seafood',cod:'Seafood',crab:'Seafood',
+  fish:'Seafood','fish fillet':'Seafood','fish fillets':'Seafood',halibut:'Seafood',lobster:'Seafood',
+  mahi:'Seafood','mahi mahi':'Seafood',mussel:'Seafood',mussels:'Seafood',oyster:'Seafood',
+  oysters:'Seafood',salmon:'Seafood','salmon fillet':'Seafood','salmon fillets':'Seafood',
+  sardine:'Seafood',sardines:'Seafood',scallop:'Seafood',scallops:'Seafood',shrimp:'Seafood',
+  snapper:'Seafood',squid:'Seafood',tilapia:'Seafood',tuna:'Seafood','canned tuna':'Pantry',
+  'tuna steak':'Seafood','sea bass':'Seafood','striped bass':'Seafood','swordfish':'Seafood',
+  // Dairy
+  butter:'Dairy','cheddar cheese':'Dairy',cheese:'Dairy','cream cheese':'Dairy',
+  'feta cheese':'Dairy','goat cheese':'Dairy','gouda cheese':'Dairy','heavy cream':'Dairy',
+  'heavy whipping cream':'Dairy',kefir:'Dairy','mozzarella cheese':'Dairy',milk:'Dairy',
+  'oat milk':'Dairy','almond milk':'Dairy','parmesan cheese':'Dairy',parmesan:'Dairy',
+  'ricotta cheese':'Dairy',ricotta:'Dairy',sour:'Dairy','sour cream':'Dairy',
+  'swiss cheese':'Dairy',yogurt:'Dairy','greek yogurt':'Dairy','half and half':'Dairy',
+  'cream':'Dairy','whipped cream':'Dairy','cottage cheese':'Dairy',brie:'Dairy',
+  // Pantry
+  'all purpose flour':'Pantry','baking powder':'Pantry','baking soda':'Pantry',
+  'bay leaf':'Pantry','bay leaves':'Pantry','black beans':'Pantry','black pepper':'Pantry',
+  'bread crumbs':'Pantry',breadcrumbs:'Pantry','brown sugar':'Pantry','cayenne pepper':'Pantry',
+  chickpeas:'Pantry','chicken broth':'Pantry','chicken stock':'Pantry','vegetable broth':'Pantry',
+  'vegetable stock':'Pantry','beef stock':'Pantry','chili flakes':'Pantry','chili powder':'Pantry',
+  'cocoa powder':'Pantry',coconut:'Pantry','coconut milk':'Pantry','coconut oil':'Pantry',
+  cornstarch:'Pantry',cumin:'Pantry','curry powder':'Pantry','dijon mustard':'Pantry',
+  flour:'Pantry','garlic powder':'Pantry','honey':'Pantry','hot sauce':'Pantry',
+  'kidney beans':'Pantry',lentils:'Pantry','maple syrup':'Pantry',mayo:'Pantry',
+  mayonnaise:'Pantry','mustard':'Pantry','olive oil':'Pantry','onion powder':'Pantry',
+  oregano:'Pantry',paprika:'Pantry',pasta:'Pantry','peanut butter':'Pantry',
+  'pinto beans':'Pantry','red pepper flakes':'Pantry',rice:'Pantry',
+  'rice vinegar':'Pantry',salt:'Pantry','sesame oil':'Pantry','soy sauce':'Pantry',
+  'sriracha':'Pantry',sugar:'Pantry','tomato paste':'Pantry','tomato sauce':'Pantry',
+  'crushed tomatoes':'Pantry','diced tomatoes':'Pantry',turmeric:'Pantry',
+  'vanilla extract':'Pantry','vegetable oil':'Pantry',vinegar:'Pantry',
+  'white wine':'Pantry','red wine':'Pantry','worcestershire sauce':'Pantry',
+  'panko':'Pantry','panko breadcrumbs':'Pantry',noodles:'Pantry',quinoa:'Pantry',
+  oats:'Pantry','rolled oats':'Pantry','canned beans':'Pantry','black olives':'Pantry',
+  olives:'Pantry','tahini':'Pantry','lentil':'Pantry','chickpea':'Pantry',
+  'fish sauce':'Pantry','oyster sauce':'Pantry','hoisin sauce':'Pantry',
+  'teriyaki sauce':'Pantry',cinnamon:'Pantry','nutmeg':'Pantry',cloves:'Pantry',
+  // Frozen
+  'frozen peas':'Frozen','frozen corn':'Frozen','frozen berries':'Frozen',
+  'frozen spinach':'Frozen','frozen broccoli':'Frozen','frozen edamame':'Frozen',
+  'frozen shrimp':'Frozen','frozen salmon':'Frozen','frozen cod':'Frozen',
+  'frozen fish':'Frozen','frozen mango':'Frozen','ice cream':'Frozen',
+  'frozen green beans':'Frozen','frozen vegetables':'Frozen','frozen fries':'Frozen',
+  // Bakery
+  bagel:'Bakery',bagels:'Bakery',baguette:'Bakery',bread:'Bakery','burger bun':'Bakery',
+  'burger buns':'Bakery','hot dog bun':'Bakery','hot dog buns':'Bakery',muffin:'Bakery',
+  muffins:'Bakery',pita:'Bakery','pita bread':'Bakery',roll:'Bakery',rolls:'Bakery',
+  tortilla:'Bakery',tortillas:'Bakery','wrap':'Bakery','sourdough':'Bakery',
+  'sourdough bread':'Bakery','whole wheat bread':'Bakery','sandwich bread':'Bakery',
+  croissant:'Bakery',croissants:'Bakery','english muffin':'Bakery','english muffins':'Bakery',
+  // Drinks
+  beer:'Drinks',juice:'Drinks','orange juice':'Drinks','apple juice':'Drinks',
+  'sparkling water':'Drinks',soda:'Drinks',tea:'Drinks',water:'Drinks',wine:'Drinks',
+  'white wine vinegar':'Pantry','apple cider vinegar':'Pantry',
+};
+
+// Match ingredient name to category using dictionary, then AI fallback
+function dictCategory(name){
+  const lower=name.toLowerCase().trim();
+  // Exact match first
+  if(ING_DICT[lower])return ING_DICT[lower];
+  // Partial match — check if any dict key is contained in the ingredient name
+  for(const[key,cat] of Object.entries(ING_DICT)){
+    if(lower.includes(key))return cat;
+  }
+  return null; // unknown — needs AI
+}
+
+// Categorize a batch of ingredient names — dict first, AI for unknowns
+async function categorizeBatch(names){
+  const result={};
+  const needsAI=[];
+  names.forEach(n=>{
+    const cat=dictCategory(n);
+    if(cat)result[n]=cat;
+    else needsAI.push(n);
+  });
+  if(needsAI.length){
+    const apiKey=localStorage.getItem('ok_apikey');
+    if(apiKey){
+      try{
+        const prompt=`Categorize each of these grocery ingredients into exactly one of these categories: Produce, Meat, Seafood, Dairy, Pantry, Frozen, Bakery, Drinks, Other.
+Ingredients: ${JSON.stringify(needsAI)}
+Return ONLY a JSON object mapping each ingredient name to its category, e.g. {"chicken breast":"Meat","milk":"Dairy"}`;
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+        const data=await resp.json();
+        const aiCats=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+        Object.assign(result,aiCats);
+      }catch(e){
+        // AI failed — default unknowns to Other
+        needsAI.forEach(n=>{result[n]='Other';});
+      }
+    } else {
+      needsAI.forEach(n=>{result[n]='Other';});
+    }
+  }
+  return result;
+}
+
+// Bulk add ingredients with smart categorization
+async function bulkAddIngredients(ings){
+  if(!ings.length)return 0;
+  const names=ings.map(i=>typeof i==='string'?i:i.name);
+  const catMap=await categorizeBatch(names);
+  for(const ing of ings){
+    const name=typeof ing==='string'?ing:ing.name;
+    const qty=typeof ing==='string'?'':ing.qty||'';
+    const cat=catMap[name]||'Other';
+    await window.addGrocery(name,qty,cat);
+    await delay(20);
+  }
+  return ings.length;
+}
+window.openFilterSheet=function(ctx){
+  activeFilterCtx=ctx;
+  let title,opts,current,multi=true;
+  if(ctx==='groceryCat'){title='Filter by Category';opts=['All',...CAT_ORDER];current=[groceryCatFilter];multi=false;}
+  else if(ctx==='mealCuisine'){title='Filter by Cuisine';opts=CUISINES;current=[...mealFilters.cuisine];}
+  else if(ctx==='mealProtein'){title='Filter by Protein';opts=PROTEINS;current=[...mealFilters.protein];}
+  tempFilterSel=[...current];
+  document.getElementById('filterSheetTitle').textContent=title;
+  document.getElementById('filterSheetOptions').innerHTML=opts.map(o=>{
+    const label=ctx==='mealProtein'?(PROTEIN_ICONS[o]||'')+' '+o:o;
+    return `<div class="filter-option${tempFilterSel.includes(o)?' selected':''}" onclick="toggleFilterOpt(this,'${o}',${multi})">${label}<span class="check">✓</span></div>`;
+  }).join('');
+  document.getElementById('filterOverlay').classList.add('open');
+};
+window.toggleFilterOpt=function(el,val,multi){
+  if(!multi){tempFilterSel=[val];document.querySelectorAll('#filterSheetOptions .filter-option').forEach(o=>{o.classList.remove('selected');o.querySelector('.check').style.opacity='0';});el.classList.add('selected');el.querySelector('.check').style.opacity='1';return;}
+  el.classList.toggle('selected');
+  if(tempFilterSel.includes(val))tempFilterSel=tempFilterSel.filter(v=>v!==val);else tempFilterSel.push(val);
+  el.querySelector('.check').style.opacity=el.classList.contains('selected')?'1':'0';
+};
+window.clearFilterSel=function(){tempFilterSel=[];document.querySelectorAll('#filterSheetOptions .filter-option').forEach(o=>{o.classList.remove('selected');o.querySelector('.check').style.opacity='0';});};
+window.applyFilter=function(){
+  if(activeFilterCtx==='groceryCat'){
+    groceryCatFilter=tempFilterSel[0]||'All';
+    const active=groceryCatFilter!=='All';
+    document.getElementById('groceryCatFilterBtn').classList.toggle('active',active);
+    document.getElementById('groceryCatFilterBtn').innerHTML=active?`${groceryCatFilter} <span class="chevron">▼</span>`:`Category <span class="chevron">▼</span>`;
+    renderGroceries();
+  }else if(activeFilterCtx==='mealCuisine'){
+    mealFilters.cuisine=[...tempFilterSel];
+    const btn=document.getElementById('cuisineFilterBtn');
+    btn.classList.toggle('active',mealFilters.cuisine.length>0);
+    btn.innerHTML=mealFilters.cuisine.length?`${mealFilters.cuisine.join(', ')} <span class="chevron">▼</span>`:`Cuisine <span class="chevron">▼</span>`;
+    renderMeals();
+  }else if(activeFilterCtx==='mealProtein'){
+    mealFilters.protein=[...tempFilterSel];
+    const btn=document.getElementById('proteinFilterBtn');
+    btn.classList.toggle('active',mealFilters.protein.length>0);
+    btn.innerHTML=mealFilters.protein.length?`${mealFilters.protein.join(', ')} <span class="chevron">▼</span>`:`Protein <span class="chevron">▼</span>`;
+    renderMeals();
+  }
+  closeFilterSheetForce();
+};
+window.closeFilterSheet=function(e){if(e.target.id==='filterOverlay')closeFilterSheetForce();};
+window.closeFilterSheetForce=function(){document.getElementById('filterOverlay').classList.remove('open');};
+
+// ── PROTEIN TOGGLE ────────────────────────────────────────────
+window.toggleProtein=function(el,ctx){
+  el.classList.toggle('selected');const val=el.dataset.val;
+  if(ctx==='add'){if(addProteins.includes(val))addProteins=addProteins.filter(p=>p!==val);else addProteins.push(val);}
+  else if(ctx==='edit'){if(editProteins.includes(val))editProteins=editProteins.filter(p=>p!==val);else editProteins.push(val);}
+};
+
+// ── MEALS ─────────────────────────────────────────────────────
+window.addIng=function(){const name=document.getElementById('ingName').value.trim(),qty=document.getElementById('ingQty').value.trim();if(!name)return;pendingIngs.push({name,qty});document.getElementById('ingName').value='';document.getElementById('ingQty').value='';renderIngChips();document.getElementById('ingName').focus();};
+window.removeIng=function(i){pendingIngs.splice(i,1);renderIngChips();};
+function renderIngChips(){document.getElementById('ingChips').innerHTML=pendingIngs.map((g,i)=>`<div class="ing-chip">${g.qty?`<strong>${g.qty}</strong> `:''}${g.name}<button onclick="removeIng(${i})">✕</button></div>`).join('');}
+window.aiPopulateIngredients=async function(){
+  const apiKey=localStorage.getItem('ok_apikey');if(!apiKey){showToast('Add your Claude API key in Settings first');switchTab('prefs');return;}
+  const mealName=document.getElementById('mealName').value.trim(),cuisine=document.getElementById('mealCuisine').value;
+  if(!mealName){showToast('Enter a meal name first');return;}
+  const btn=document.getElementById('aiIngBtn');btn.disabled=true;btn.textContent='✨ Thinking...';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:`List ingredients with quantities for "${mealName}"${cuisine?' ('+cuisine+' style)':''}. Restrictions: ${prefs.restrictions?.join(', ')||'none'}. Return ONLY JSON: [{"name":"...","qty":"..."}] with 6-10 ingredients.`}]})});
+    const data=await resp.json();
+    const ings=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    pendingIngs=[...pendingIngs,...ings.map(i=>({name:i.name,qty:i.qty||''}))];
+    renderIngChips();showToast(`✨ ${ings.length} ingredients added!`);
+  }catch(e){showToast('AI error — check your API key');}
+  btn.disabled=false;btn.innerHTML='✨ Auto-fill ingredients with AI';
+};
+window.addMeal=async function(){
+  const name=document.getElementById('mealName').value.trim();if(!name){showToast('Please enter a meal name');return;}
+  const meal={id:Date.now().toString(),name,cuisine:document.getElementById('mealCuisine').value,time:document.getElementById('mealTime').value.trim(),note:document.getElementById('mealNote').value.trim(),ingredients:[...pendingIngs],proteins:[...addProteins],fav:false,ts:Date.now()};
+  meals.unshift(meal);
+  ['mealName','mealTime','mealNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mealCuisine').value='';
+  pendingIngs=[];addProteins=[];
+  document.querySelectorAll('#addProteinGrid .protein-chip').forEach(c=>c.classList.remove('selected'));
+  renderIngChips();save('meals');renderMeals();renderMealSelectList();await fsSet('meals',meal.id,meal);showToast('Meal saved!');
+};
+window.toggleFavFilter=function(){mealFilters.fav=!mealFilters.fav;document.getElementById('favFilterBtn').classList.toggle('active',mealFilters.fav);renderMeals();};
+window.toggleFav=async function(id){const m=meals.find(m=>m.id===id);if(!m)return;m.fav=!m.fav;save('meals');renderMeals();await fsSet('meals',id,m);};
+window.deleteMeal=async function(id){meals=meals.filter(m=>m.id!==id);save('meals');renderMeals();renderMealSelectList();await fsDel('meals',id);};
+window.shopMeal=async function(id){
+  const m=meals.find(m=>m.id===id);if(!m||!m.ingredients?.length){showToast('No ingredients saved for this meal');return;}
+  showToast('🛒 Categorizing ingredients...');
+  const count=await bulkAddIngredients(m.ingredients);
+  showToast(`🛒 ${count} ingredients added!`);switchTab('grocery');
+};
+function renderMeals(){
+  const list=document.getElementById('mealsList');
+  let filtered=[...meals];
+  if(mealFilters.fav)filtered=filtered.filter(m=>m.fav);
+  if(mealFilters.cuisine.length)filtered=filtered.filter(m=>m.cuisine&&mealFilters.cuisine.some(c=>m.cuisine.toLowerCase().includes(c.toLowerCase())));
+  if(mealFilters.protein.length)filtered=filtered.filter(m=>m.proteins?.some(p=>mealFilters.protein.includes(p)));
+  if(!filtered.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">🍽️</div><p>${meals.length?'No meals match this filter.':'No meals saved yet.<br>Add your favorites above!'}</p></div>`;return;}
+  list.innerHTML=[...filtered].sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)).map(m=>`
+    <div class="meal-card">
+      <div class="meal-name">${m.name}</div>
+      <div class="meal-tags">
+        ${m.cuisine?`<span class="meal-tag">${m.cuisine}</span>`:''}
+        ${m.time?`<span class="meal-tag">⏱ ${m.time}</span>`:''}
+        ${m.fav?`<span class="meal-tag fav">⭐ Fav</span>`:''}
+        ${(m.proteins||[]).map(p=>`<span class="meal-tag protein">${PROTEIN_ICONS[p]||''} ${p}</span>`).join('')}
+      </div>
+      ${m.note?`<div class="meal-note">"${m.note}"</div>`:''}
+      ${m.ingredients?.length?`<div class="meal-ings"><strong>Ingredients</strong>${m.ingredients.map(i=>(i.qty?i.qty+' ':'')+i.name).join(' · ')}</div>`:''}
+      <div class="meal-actions">
+        <button class="meal-btn fav" onclick="toggleFav('${m.id}')">${m.fav?'💔 Unfav':'⭐ Fav'}</button>
+        <button class="meal-btn shop" onclick="shopMeal('${m.id}')">🛒 Shop</button>
+        ${m.steps?.length?`<button class="meal-btn recipe" onclick="openRecipeSheet('${m.id}')">📖 Recipe</button>`:''}
+        <button class="meal-btn edit" onclick="openEdit('${m.id}')">✏️ Edit</button>
+        <button class="meal-btn del" onclick="deleteMeal('${m.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── EDIT MEAL ─────────────────────────────────────────────────
+window.openEdit=function(id){
+  const m=meals.find(m=>m.id===id);if(!m)return;
+  editMealId=id;editIngs=[...(m.ingredients||[])];editProteins=[...(m.proteins||[])];
+  document.getElementById('editMealName').value=m.name||'';
+  document.getElementById('editCuisine').value=m.cuisine||'';
+  document.getElementById('editTime').value=m.time||'';
+  document.getElementById('editNote').value=m.note||'';
+  document.getElementById('editIngName').value='';document.getElementById('editIngQty').value='';
+  // Load steps — stored as array, edit as newline-separated text
+  const stepsArr=m.steps||[];
+  document.getElementById('editSteps').value=stepsArr.join('\n');
+  // Show regenerate btn only if steps already exist
+  document.getElementById('editGenerateRecipeBtn').style.display=stepsArr.length?'none':'flex';
+  document.getElementById('editRegenerateBtn').style.display=stepsArr.length?'block':'none';
+  document.querySelectorAll('#editProteinGrid .protein-chip').forEach(c=>c.classList.toggle('selected',editProteins.includes(c.dataset.val)));
+  renderEditChips();document.getElementById('editOverlay').classList.add('open');
+};
+window.addEditIng=function(){const name=document.getElementById('editIngName').value.trim(),qty=document.getElementById('editIngQty').value.trim();if(!name)return;editIngs.push({name,qty});document.getElementById('editIngName').value='';document.getElementById('editIngQty').value='';renderEditChips();document.getElementById('editIngName').focus();};
+window.removeEditIng=function(i){editIngs.splice(i,1);renderEditChips();};
+function renderEditChips(){document.getElementById('editIngChips').innerHTML=editIngs.map((g,i)=>`<div class="ing-chip">${g.qty?`<strong>${g.qty}</strong> `:''}${g.name}<button onclick="removeEditIng(${i})">✕</button></div>`).join('');}
+window.saveEditMeal=async function(){
+  const m=meals.find(m=>m.id===editMealId);if(!m)return;
+  m.name=document.getElementById('editMealName').value.trim()||m.name;
+  m.cuisine=document.getElementById('editCuisine').value;
+  m.time=document.getElementById('editTime').value.trim();
+  m.note=document.getElementById('editNote').value.trim();
+  m.ingredients=[...editIngs];m.proteins=[...editProteins];
+  // Parse steps from textarea — split on newlines, filter blanks
+  const stepsRaw=document.getElementById('editSteps').value.trim();
+  m.steps=stepsRaw?stepsRaw.split('\n').map(s=>s.trim()).filter(Boolean):[];
+  save('meals');renderMeals();renderMealSelectList();await fsSet('meals',m.id,m);closeEditForce();showToast('Meal updated!');
+};
+window.closeEdit=function(e){if(e.target.id==='editOverlay')closeEditForce();};
+window.closeEditForce=function(){document.getElementById('editOverlay').classList.remove('open');editMealId=null;};
+
+// ── PLANNER ───────────────────────────────────────────────────
+function getWeekMonday(dateStr){
+  const d=dateStr?new Date(dateStr+'T12:00:00'):new Date();
+  const day=d.getDay(),diff=day===0?-6:1-day;
+  d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+function currentWeekMonday(){return getWeekMonday();}
+
+window.switchPlannerView=function(view){
+  plannerView=view;
+  document.getElementById('plannerToggleThis').classList.toggle('active',view==='this');
+  document.getElementById('plannerToggleHistory').classList.toggle('active',view==='history');
+  document.getElementById('plannerThisWeek').style.display=view==='this'?'block':'none';
+  document.getElementById('plannerHistory').style.display=view==='history'?'block':'none';
+  if(view==='history')renderHistory();
+};
+
+// Archive current week into history when a new week starts, prune old weeks
+function archiveOldWeeks(){
+  const thisMonday=currentWeekMonday();
+  // Find any planner slots from BEFORE this week and archive them
+  const toArchive={};
+  const toKeep={};
+  Object.entries(planner).forEach(([key,val])=>{
+    const dayKey=key.split('_')[0]; // e.g. "2025-01-06"
+    const entryMonday=getWeekMonday(dayKey);
+    if(entryMonday<thisMonday){toArchive[entryMonday]=toArchive[entryMonday]||{};toArchive[entryMonday][key]=val;}
+    else{toKeep[key]=val;}
+  });
+
+  if(Object.keys(toArchive).length){
+    Object.entries(toArchive).forEach(([monday,slots])=>{
+      history[monday]=history[monday]||{};
+      Object.assign(history[monday],slots);
+    });
+    planner=toKeep;
+    // Prune history older than MAX_HISTORY_WEEKS
+    const mondays=Object.keys(history).sort();
+    while(mondays.length>MAX_HISTORY_WEEKS){
+      const old=mondays.shift();
+      delete history[old];
+    }
+    save('planner');save('history');
+    // Sync to Firebase
+    Object.entries(history).forEach(([monday,data])=>fsSet('history',monday,{id:monday,...data}));
+    Object.keys(planner).length===0
+      ? Object.keys(toArchive).forEach(m=>Object.keys(toArchive[m]).forEach(k=>fsDel('planner',k)))
+      : null;
+  }
+}
+
+function renderPlanner(){
+  const ws=new Date(currentWeekMonday()+'T12:00:00');
+  document.getElementById('weekGrid').innerHTML=DAYS.map((dayName,i)=>{
+    const date=new Date(ws);date.setDate(ws.getDate()+i);
+    const dayKey=date.toISOString().slice(0,10),isToday=date.toDateString()===new Date().toDateString();
+    return `<div class="day-card"><div class="day-header${isToday?' today':''}"><span class="day-name">${dayName}${isToday?' · Today':''}</span><span class="day-date">${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div><div class="day-body">${SLOTS.map(slot=>{
+      const key=`${dayKey}_${slot}`,entry=planner[key];
+      if(!entry)return `<div class="day-slot"><div class="slot-label">${slot}</div><div class="slot-meal" onclick="openPicker('${dayKey}','${slot}')"><span style="font-size:12px">+ Assign meal</span></div></div>`;
+      if(entry.type==='takeout'){
+        return `<div class="day-slot"><div class="slot-label">${slot}</div><div class="slot-meal takeout"><span>🥡 Takeout${entry.note?' · '+entry.note:''}</span><span class="slot-clear" onclick="event.stopPropagation();clearSlot('${dayKey}','${slot}')">✕</span></div></div>`;
+      }
+      const mealId=entry.mealId||entry;
+      const meal=meals.find(m=>m.id===mealId);
+      return `<div class="day-slot"><div class="slot-label">${slot}</div><div class="slot-meal${meal?' filled':''}" onclick="openPicker('${dayKey}','${slot}')">${meal?`<span>${meal.name}</span><span class="slot-clear" onclick="event.stopPropagation();clearSlot('${dayKey}','${slot}')">✕</span>`:`<span style="font-size:12px;color:var(--mid-gray)">Unknown meal</span>`}</div></div>`;
+    }).join('')}</div></div>`;
+  }).join('');
+}
+
+function renderHistory(){
+  const grid=document.getElementById('historyGrid');
+  const mondays=Object.keys(history).sort().reverse(); // most recent first
+  if(!mondays.length){grid.innerHTML=`<div class="history-empty">No history yet.<br>Past weeks will appear here.</div>`;return;}
+  grid.innerHTML=mondays.map((monday,wi)=>{
+    const ws=new Date(monday+'T12:00:00');
+    const endDate=new Date(ws);endDate.setDate(ws.getDate()+6);
+    const weekLabel=`${ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${endDate.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+    const weekData=history[monday]||{};
+    const hasAny=Object.values(weekData).some(v=>v);
+
+    const daysHtml=DAYS.map((dayName,di)=>{
+      const date=new Date(ws);date.setDate(ws.getDate()+di);
+      const dayKey=date.toISOString().slice(0,10);
+      const slotsHtml=SLOTS.map(slot=>{
+        const key=`${dayKey}_${slot}`;
+        const entry=weekData[key];
+        let val='',cls='empty';
+        if(entry){
+          if(entry.type==='takeout'){val=`🥡 Takeout${entry.note?' · '+entry.note:''}`;cls='takeout';}
+          else{const mealId=entry.mealId||entry;const meal=meals.find(m=>m.id===mealId);val=meal?meal.name:'?';cls='';}
+        }else{val='—';cls='empty';}
+        return `<div class="history-slot"><span class="history-slot-label">${slot}</span><span class="history-slot-val${cls?' '+cls:''}">${val}</span></div>`;
+      }).join('');
+      return `<div class="history-day"><div class="history-day-name">${dayName} · ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>${slotsHtml}</div>`;
+    }).join('');
+
+    return `<div class="history-week">
+      <div class="history-week-header" onclick="toggleHistoryWeek(${wi})">
+        <div><div class="history-week-title">Week of ${weekLabel}</div></div>
+        <div class="history-week-chevron" id="hwc-${wi}">▼</div>
+      </div>
+      <div class="history-week-body" id="hwb-${wi}">${daysHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleHistoryWeek=function(i){
+  const body=document.getElementById(`hwb-${i}`),chev=document.getElementById(`hwc-${i}`);
+  const open=body.classList.toggle('open');
+  chev.classList.toggle('open',open);
+};
+
+window.addPlannerToGroceries=async function(){
+  const ws=new Date(currentWeekMonday()+'T12:00:00');
+  const allIngs=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);const dayKey=d.toISOString().slice(0,10);
+    for(const slot of SLOTS){
+      const entry=planner[`${dayKey}_${slot}`];
+      if(!entry||entry.type==='takeout')continue;
+      const mealId=entry.mealId||entry;
+      const meal=meals.find(m=>m.id===mealId);if(!meal?.ingredients?.length)continue;
+      allIngs.push(...meal.ingredients);
+    }
+  }
+  if(!allIngs.length){showToast("No ingredients found — add them to meals first!");return;}
+  showToast('🛒 Categorizing ingredients...');
+  const count=await bulkAddIngredients(allIngs);
+  showToast(`🛒 ${count} ingredients added!`);switchTab('grocery');
+};
+
+// ── PICKER ────────────────────────────────────────────────────
+window.openPicker=function(dayKey,slot){pickerTarget={dayKey,slot};document.getElementById('pickerSearch').value='';renderPickerList();document.getElementById('pickerOverlay').classList.add('open');};
+window.renderPickerList=function(){
+  const search=document.getElementById('pickerSearch').value.toLowerCase();
+  let filtered=[...meals];
+  if(pickerFilters.fav)filtered=filtered.filter(m=>m.fav);
+  if(pickerFilters.cuisine.length)filtered=filtered.filter(m=>m.cuisine&&pickerFilters.cuisine.some(c=>m.cuisine.toLowerCase().includes(c.toLowerCase())));
+  if(pickerFilters.protein.length)filtered=filtered.filter(m=>m.proteins?.some(p=>pickerFilters.protein.includes(p)));
+  if(search)filtered=filtered.filter(m=>m.name.toLowerCase().includes(search));
+  const list=document.getElementById('pickerList');
+  if(!filtered.length){list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--mid-gray);font-size:14px">${meals.length?'No meals match.':'No meals saved yet.'}</div>`;return;}
+  list.innerHTML=[...filtered].sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)).map(m=>`<div class="picker-item" onclick="assignMeal('${m.id}')"><span style="font-size:18px">${m.fav?'⭐':'🍽️'}</span><div><div style="font-weight:600">${m.name}</div><div style="font-size:11px;color:var(--mid-gray)">${[m.cuisine,m.time,(m.proteins||[]).join(', ')].filter(Boolean).join(' · ')}</div></div></div>`).join('');
+};
+window.promptTakeout=function(){closePickerForce();document.getElementById('takeoutNote').value='';document.getElementById('takeoutOverlay').classList.add('open');};
+window.closeTakeoutSheet=function(e){if(e.target.id==='takeoutOverlay')closeTakeoutSheetForce();};
+window.closeTakeoutSheetForce=function(){document.getElementById('takeoutOverlay').classList.remove('open');};
+window.confirmTakeout=async function(){
+  if(!pickerTarget)return;
+  const note=document.getElementById('takeoutNote').value.trim();
+  const{dayKey,slot}=pickerTarget,key=`${dayKey}_${slot}`;
+  const entry={type:'takeout',note,dayKey,slot};
+  planner[key]=entry;save('planner');renderPlanner();closeTakeoutSheetForce();pickerTarget=null;
+  await fsSet('planner',key,{id:key,...entry});
+};
+window.togglePickerFav=function(){pickerFilters.fav=!pickerFilters.fav;document.getElementById('pickerFavBtn').classList.toggle('active',pickerFilters.fav);renderPickerList();};
+window.openPickerFilter=function(type){
+  activePickerFilterType=type;
+  tempPickerFilterSel=type==='cuisine'?[...pickerFilters.cuisine]:[...pickerFilters.protein];
+  document.getElementById('pickerFilterTitle').textContent=type==='cuisine'?'Filter by Cuisine':'Filter by Protein';
+  const opts=type==='cuisine'?CUISINES.map(c=>({val:c,label:c})):PROTEINS.map(p=>({val:p,label:(PROTEIN_ICONS[p]||'')+' '+p}));
+  document.getElementById('pickerFilterOptions').innerHTML=opts.map(o=>`<div class="filter-option${tempPickerFilterSel.includes(o.val)?' selected':''}" onclick="togglePickerFilterOpt(this,'${o.val}')">${o.label}<span class="check">✓</span></div>`).join('');
+  document.getElementById('pickerFilterOverlay').classList.add('open');
+};
+window.togglePickerFilterOpt=function(el,val){el.classList.toggle('selected');if(tempPickerFilterSel.includes(val))tempPickerFilterSel=tempPickerFilterSel.filter(v=>v!==val);else tempPickerFilterSel.push(val);el.querySelector('.check').style.opacity=el.classList.contains('selected')?'1':'0';};
+window.clearPickerFilter=function(){tempPickerFilterSel=[];document.querySelectorAll('#pickerFilterOptions .filter-option').forEach(o=>{o.classList.remove('selected');o.querySelector('.check').style.opacity='0';});};
+window.applyPickerFilter=function(){if(activePickerFilterType==='cuisine')pickerFilters.cuisine=[...tempPickerFilterSel];else pickerFilters.protein=[...tempPickerFilterSel];document.getElementById('pickerCuisineBtn').classList.toggle('active',pickerFilters.cuisine.length>0);document.getElementById('pickerProteinBtn').classList.toggle('active',pickerFilters.protein.length>0);closePickerFilterSheetForce();renderPickerList();};
+window.assignMeal=async function(mealId){if(!pickerTarget)return;const{dayKey,slot}=pickerTarget,key=`${dayKey}_${slot}`;const entry={mealId,dayKey,slot};planner[key]=entry;save('planner');renderPlanner();closePickerForce();await fsSet('planner',key,{id:key,...entry});};
+window.clearSlot=async function(dayKey,slot){const key=`${dayKey}_${slot}`;delete planner[key];save('planner');renderPlanner();await fsDel('planner',key);};
+window.clearPickerSlot=async function(){if(!pickerTarget)return;await window.clearSlot(pickerTarget.dayKey,pickerTarget.slot);closePickerForce();};
+window.closePicker=function(e){if(e.target.id==='pickerOverlay')closePickerForce();};
+window.closePickerForce=function(){document.getElementById('pickerOverlay').classList.remove('open');pickerTarget=null;};
+window.closePickerFilterSheet=function(e){if(e.target.id==='pickerFilterOverlay')closePickerFilterSheetForce();};
+window.closePickerFilterSheetForce=function(){document.getElementById('pickerFilterOverlay').classList.remove('open');};
+
+// ── RECIPES ───────────────────────────────────────────────────
+window.switchRecipePanel=function(panel){
+  document.querySelectorAll('.recipe-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.recipe-tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+panel).classList.add('active');
+  document.getElementById('rtb-'+panel).classList.add('active');
+  if(panel==='lookup')renderMealSelectList();
+};
+const SYSTEM_PROMPT=`You are a professional chef assistant. Only suggest well-established, widely-recognized recipes that home cooks commonly make successfully. Never suggest obscure, experimental, or incomplete recipes. Always include accurate ingredient quantities, clear step-by-step instructions, realistic time estimates, and difficulty level. Prioritize recipes with broad appeal and proven techniques. Respect all stated dietary restrictions absolutely. Format responses as requested in JSON only.`;
+
+window.suggestRecipes=async function(){
+  const key=localStorage.getItem('ok_apikey');if(!key){showToast('Add your Claude API key in Settings first');switchTab('prefs');return;}
+  const btn=document.getElementById('suggestBtn'),results=document.getElementById('suggestResults');
+  btn.disabled=true;btn.textContent='Thinking...';
+  results.innerHTML=`<div class="loading-dots"><span></span><span></span><span></span></div>`;
+  const veggie=document.getElementById('suggestVeggie').value,protein=document.getElementById('suggestProtein').value;
+  const favMeals=meals.filter(m=>m.fav).map(m=>m.name+(m.cuisine?` (${m.cuisine})`:'') ).join(', ')||'None saved yet';
+  const pantry=groceries.filter(g=>!g.checked).map(g=>g.name).join(', ')||'None';
+  const restrictions=prefs.restrictions?.join(', ')||'none',loves=prefs.loves?.join(', ')||'not specified';
+  const focus=[];if(veggie)focus.push(`must feature ${veggie} as a key vegetable`);if(protein)focus.push(`must use ${protein} as the protein`);
+  const prompt=`Suggest 3 well-known, home-cook-friendly recipes for a couple.\nFavorite meals: ${favMeals}\nPantry items: ${pantry}\nDietary restrictions: ${restrictions}\nThey love: ${loves}\n${focus.length?'Requirements: '+focus.join('; '):''}\nReturn ONLY a JSON array with EXACT quantities for every ingredient:\n[{"name":"...","why":"...","difficulty":"Easy|Medium|Hard","time":"...","ingredients":[{"name":"...","qty":"..."}],"steps":["..."],"summary":"..."}]`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,system:SYSTEM_PROMPT,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    const recipes=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    results.innerHTML=recipes.map(r=>recipeCardHTML(r)).join('');
+  }catch(e){results.innerHTML=`<div class="recipe-card"><p style="color:#C0392B">Couldn't load suggestions. Check your API key in Settings.</p></div>`;}
+  btn.disabled=false;btn.textContent='Suggest';
+};
+
+function renderMealSelectList(){
+  const list=document.getElementById('mealSelectList');
+  if(!meals.length){list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--mid-gray);font-size:14px">No meals saved yet. Add meals in the Meals tab first!</div>`;return;}
+  list.innerHTML=meals.map(m=>`<div class="meal-select-item${selectedLookupMealId===m.id?' selected':''}" onclick="selectLookupMeal('${m.id}')"><span style="font-size:20px">${m.fav?'⭐':'🍽️'}</span><div><div class="msi-name">${m.name}</div><div class="msi-meta">${[m.cuisine,m.time,(m.proteins||[]).join(', ')].filter(Boolean).join(' · ')}</div></div></div>`).join('');
+}
+window.selectLookupMeal=function(id){selectedLookupMealId=id;renderMealSelectList();document.getElementById('lookupBtn').disabled=false;document.getElementById('lookupResults').innerHTML='';};
+window.lookupRecipe=async function(){
+  const key=localStorage.getItem('ok_apikey');if(!key){showToast('Add your Claude API key in Settings first');switchTab('prefs');return;}
+  const meal=meals.find(m=>m.id===selectedLookupMealId);if(!meal)return;
+  const btn=document.getElementById('lookupBtn'),results=document.getElementById('lookupResults');
+  btn.disabled=true;btn.textContent='Getting recipe...';
+  results.innerHTML=`<div class="loading-dots"><span></span><span></span><span></span></div>`;
+  const restrictions=prefs.restrictions?.join(', ')||'none';
+  const prompt=`Give a complete, well-known recipe for "${meal.name}"${meal.cuisine?' ('+meal.cuisine+' style)':''}.\nDietary restrictions: ${restrictions}.\nInclude EXACT quantities for every single ingredient.\nReturn ONLY a JSON object:\n{"name":"...","why":"...","difficulty":"Easy|Medium|Hard","time":"...","ingredients":[{"name":"...","qty":"..."}],"steps":["..."],"summary":"..."}`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,system:SYSTEM_PROMPT,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    const recipe=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    results.innerHTML=recipeCardHTML(recipe);
+  }catch(e){results.innerHTML=`<div class="recipe-card"><p style="color:#C0392B">Couldn't load recipe. Check your API key in Settings.</p></div>`;}
+  btn.disabled=false;btn.textContent='Get Recipe';
+};
+
+function recipeCardHTML(r,showSaveBtn=false){
+  const ings=r.ingredients||[];
+  const ingData=ings.map(i=>typeof i==='string'?{name:i,qty:''}:i);
+  const ingNames=JSON.stringify(ingData.map(i=>i.name));
+  const saveId='save_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  // Store recipe data for save button
+  window._recipeCardData=window._recipeCardData||{};
+  window._recipeCardData[saveId]=r;
+  return `<div class="recipe-card">
+    <h3>${r.name}</h3>
+    ${r.why?`<p class="recipe-why">💬 ${r.why}</p>`:''}
+    <p class="recipe-body">${r.summary||''}</p>
+    <div class="recipe-meta">
+      ${r.difficulty?`<span class="recipe-meta-tag">📊 ${r.difficulty}</span>`:''}
+      ${r.time?`<span class="recipe-meta-tag">⏱ ${r.time}</span>`:''}
+    </div>
+    ${ingData.length?`<div class="recipe-ing-list"><h4>Ingredients</h4><div class="recipe-ing-grid">${ingData.map(i=>`<div class="recipe-ing-item"><span class="ing-name">${i.name}</span>${i.qty?`<span class="ing-amt">${i.qty}</span>`:''}</div>`).join('')}</div></div>`:''}
+    ${r.steps?.length?`<div class="recipe-steps"><h4>Instructions</h4>${r.steps.map((s,i)=>`<div class="recipe-step"><div class="recipe-step-num">${i+1}</div><div>${s}</div></div>`).join('')}</div>`:''}
+    <button class="btn-recipe-shop" onclick='addRecipeIngs(${ingNames})'>🛒 Add ingredients to grocery list</button>
+    <button class="btn-save-as-meal" onclick='saveRecipeCardAsMeal("${saveId}")' style="margin-top:6px">🍽️ Save as a Meal</button>
+    <div id="rcsave_${saveId}"></div>
+  </div>`;
+}
+window.saveRecipeCardAsMeal=async function(saveId){
+  const r=window._recipeCardData?.[saveId];if(!r)return;
+  const btn=event.target;btn.disabled=true;btn.textContent='Saving...';
+  const meal={
+    id:Date.now().toString(),
+    name:r.name||'Recipe',
+    cuisine:r.cuisine||'',
+    time:r.time||'',
+    note:'',
+    ingredients:(r.ingredients||[]).map(i=>typeof i==='string'?{name:i,qty:''}:{name:i.name||i,qty:i.qty||''}),
+    steps:(r.steps||[]),
+    proteins:[],
+    fav:false,
+    ts:Date.now()
+  };
+  meals.unshift(meal);
+  save('meals');renderMeals();renderMealSelectList();
+  await fsSet('meals',meal.id,meal);
+  btn.style.display='none';
+  const confirm=document.getElementById('rcsave_'+saveId);
+  if(confirm)confirm.innerHTML=`<div class="save-meal-success" style="margin-top:8px">✅ Saved as "${meal.name}" in your Meals tab — full recipe included!</div>`;
+};
+window.addRecipeIngs=async function(ings){
+  showToast('🛒 Categorizing ingredients...');
+  const count=await bulkAddIngredients(ings.map(i=>({name:i,qty:''})));
+  showToast(`🛒 ${count} ingredients added!`);switchTab('grocery');
+};
+
+// ── URL RECIPE IMPORT ─────────────────────────────────────────
+window.importRecipeUrl=async function(){
+  const key=localStorage.getItem('ok_apikey');
+  if(!key){showToast('Add your Claude API key in Settings first');switchTab('prefs');return;}
+  const url=document.getElementById('recipeUrlInput').value.trim();
+  if(!url){showToast('Please paste a recipe URL first');return;}
+  if(!url.startsWith('http')){showToast('Please enter a valid URL starting with http');return;}
+
+  const btn=document.getElementById('importBtn'),results=document.getElementById('importResults');
+  btn.disabled=true;btn.textContent='Importing...';
+  results.innerHTML=`<div class="loading-dots"><span></span><span></span><span></span></div>`;
+
+  const prompt=`Please fetch and read the recipe at this URL: ${url}
+
+Then extract the recipe and return it as a JSON object. If the page is behind a paywall, requires login, blocks access, or you cannot retrieve the recipe content for any reason, return exactly: {"error":"blocked","reason":"<brief explanation>"}
+
+If you can read the recipe, return ONLY this JSON with no other text:
+{
+  "name": "...",
+  "source_url": "${url}",
+  "source_name": "...",
+  "cuisine": "...",
+  "time": "...",
+  "servings": "...",
+  "difficulty": "Easy|Medium|Hard",
+  "summary": "...",
+  "ingredients": [{"name":"...","qty":"..."}],
+  "steps": ["..."]
+}`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:3000,
+        system:SYSTEM_PROMPT,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await resp.json();
+
+    // Extract text from response (may include tool use blocks)
+    const textBlock=data.content?.find(b=>b.type==='text');
+    if(!textBlock){throw new Error('No text response');}
+    const raw=textBlock.text.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(raw);
+
+    if(parsed.error==='blocked'){
+      results.innerHTML=`<div class="url-error-card">
+        <div class="err-icon">🔒</div>
+        <h4>Couldn't retrieve this recipe</h4>
+        <p>${parsed.reason||'This page could not be read.'}</p>
+        <ul>
+          <li>The site may be behind a paywall or login wall</li>
+          <li>The site may block automated access</li>
+          <li>Try copying the URL from a free recipe site like AllRecipes, Food Network, or Serious Eats</li>
+        </ul>
+      </div>`;
+      btn.disabled=false;btn.textContent='Import';
+      return;
+    }
+
+    // Render the imported recipe
+    window._importedRecipe=parsed;
+    const ings=parsed.ingredients||[];
+    const ingNames=JSON.stringify(ings.map(i=>i.name||i));
+    const recipeDataJSON=JSON.stringify(parsed).replace(/'/g,"&#39;");
+
+    results.innerHTML=`<div class="imported-recipe-card">
+      <h3>${parsed.name||'Recipe'}</h3>
+      <div class="imported-source">
+        🌐 Imported from <a href="${parsed.source_url}" target="_blank">${parsed.source_name||new URL(url).hostname}</a>
+      </div>
+      ${parsed.summary?`<p style="font-size:14px;line-height:1.6;color:#444;margin-bottom:10px">${parsed.summary}</p>`:''}
+      <div class="recipe-meta">
+        ${parsed.difficulty?`<span class="recipe-meta-tag">📊 ${parsed.difficulty}</span>`:''}
+        ${parsed.time?`<span class="recipe-meta-tag">⏱ ${parsed.time}</span>`:''}
+        ${parsed.servings?`<span class="recipe-meta-tag">🍽️ ${parsed.servings}</span>`:''}
+        ${parsed.cuisine?`<span class="recipe-meta-tag">${parsed.cuisine}</span>`:''}
+      </div>
+      ${ings.length?`<div class="recipe-ing-list"><h4>Ingredients</h4><div class="recipe-ing-grid">${ings.map(i=>`<div class="recipe-ing-item"><span class="ing-name">${i.name||i}</span>${(i.qty)?`<span class="ing-amt">${i.qty}</span>`:''}</div>`).join('')}</div></div>`:''}
+      ${parsed.steps?.length?`<div class="recipe-steps"><h4>Instructions</h4>${parsed.steps.map((s,i)=>`<div class="recipe-step"><div class="recipe-step-num">${i+1}</div><div>${s}</div></div>`).join('')}</div>`:''}
+      <button class="btn-recipe-shop" onclick='addRecipeIngs(${ingNames})' style="margin-top:12px">🛒 Add ingredients to grocery list</button>
+      <button class="btn-save-as-meal" id="saveAsMealBtn" onclick='saveImportedAsMeal()'>🍽️ Save as a Meal</button>
+      <div id="saveAsMealConfirm"></div>
+    </div>`;
+
+  }catch(e){
+    results.innerHTML=`<div class="url-error-card">
+      <div class="err-icon">⚠️</div>
+      <h4>Something went wrong</h4>
+      <p>We weren't able to extract a recipe from that URL. This can happen when:</p>
+      <ul>
+        <li>The page is behind a paywall or requires login</li>
+        <li>The URL isn't a recipe page</li>
+        <li>The site blocks automated access</li>
+      </ul>
+      <p style="margin-top:8px">Try a different recipe site or check your API key in Settings.</p>
+    </div>`;
+  }
+  btn.disabled=false;btn.textContent='Import';
+};
+
+window.saveImportedAsMeal=async function(){
+  const recipe=window._importedRecipe;
+  if(!recipe)return;
+  const btn=document.getElementById('saveAsMealBtn');
+  btn.disabled=true;btn.textContent='Saving...';
+
+  const meal={
+    id:Date.now().toString(),
+    name:recipe.name||'Imported Recipe',
+    cuisine:recipe.cuisine||'',
+    time:recipe.time||'',
+    note:`Imported from ${recipe.source_name||recipe.source_url||'web'}`,
+    ingredients:(recipe.ingredients||[]).map(i=>typeof i==='string'?{name:i,qty:''}:{name:i.name||i,qty:i.qty||''}),
+    steps:(recipe.steps||[]),
+    proteins:[],
+    fav:false,
+    ts:Date.now()
+  };
+
+  meals.unshift(meal);
+  save('meals');renderMeals();renderMealSelectList();
+  await fsSet('meals',meal.id,meal);
+
+  btn.style.display='none';
+  document.getElementById('saveAsMealConfirm').innerHTML=`<div class="save-meal-success">✅ Saved as "${meal.name}" in your Meals tab — full recipe included!</div>`;
+};
+
+// ── RECIPE VIEW SHEET ─────────────────────────────────────────
+window.openRecipeSheet=function(id){
+  const m=meals.find(m=>m.id===id);if(!m||!m.steps?.length)return;
+  document.getElementById('recipeSheetTitle').textContent=m.name;
+  const ings=m.ingredients||[];
+  let html='';
+  if(ings.length){
+    html+=`<span class="recipe-section-label">Ingredients</span>
+    <div class="recipe-sheet-ing-grid">${ings.map(i=>`<div class="recipe-sheet-ing-item"><span class="ing-name">${i.name}</span>${i.qty?`<span class="ing-amt">${i.qty}</span>`:''}</div>`).join('')}</div>`;
+  }
+  html+=`<span class="recipe-section-label">Instructions</span>`;
+  html+=m.steps.map((s,i)=>`<div class="recipe-sheet-step"><div class="recipe-sheet-step-num">${i+1}</div><div>${s}</div></div>`).join('');
+
+  // Meta tags
+  const metaTags=[m.cuisine,m.time].filter(Boolean).map(t=>`<span class="recipe-sheet-tag">${t}</span>`).join('');
+  if(metaTags){html=`<div class="recipe-sheet-meta">${metaTags}</div>`+html;}
+
+  document.getElementById('recipeSheetContent').innerHTML=html;
+
+  // Show shop button if ingredients exist
+  const shopBtn=document.getElementById('recipeSheetShopBtn');
+  shopBtn.style.display=ings.length?'block':'none';
+  shopBtn.dataset.mealId=id;
+
+  document.getElementById('recipeSheetOverlay').classList.add('open');
+};
+window.closeRecipeSheet=function(e){if(e.target.id==='recipeSheetOverlay')closeRecipeSheetForce();};
+window.closeRecipeSheetForce=function(){document.getElementById('recipeSheetOverlay').classList.remove('open');};
+window.shopFromRecipeSheet=async function(){
+  const id=document.getElementById('recipeSheetShopBtn').dataset.mealId;
+  closeRecipeSheetForce();
+  await window.shopMeal(id);
+};
+
+// ── AI RECIPE GENERATION (in edit sheet) ──────────────────────
+window.generateEditRecipe=async function(forceRegenerate){
+  const apiKey=localStorage.getItem('ok_apikey');
+  if(!apiKey){showToast('Add your Claude API key in Settings first');switchTab('prefs');return;}
+  const stepsField=document.getElementById('editSteps');
+  if(!forceRegenerate && stepsField.value.trim()){
+    showToast('Recipe already exists — use Regenerate to replace it');return;
+  }
+  const mealName=document.getElementById('editMealName').value.trim();
+  const cuisine=document.getElementById('editCuisine').value;
+  const time=document.getElementById('editTime').value.trim();
+  if(!mealName){showToast('Please enter the meal name first');return;}
+
+  const genBtn=document.getElementById('editGenerateRecipeBtn');
+  const regenBtn=document.getElementById('editRegenerateBtn');
+  genBtn.disabled=true;regenBtn.disabled=true;
+  const originalGenText=genBtn.innerHTML;
+  const originalRegenText=regenBtn.textContent;
+  genBtn.textContent='✨ Generating...';regenBtn.textContent='🔄 Generating...';
+
+  const ingList=editIngs.length?editIngs.map(i=>(i.qty?i.qty+' ':'')+i.name).join(', '):'not specified';
+  const restrictions=prefs.restrictions?.join(', ')||'none';
+
+  const prompt=`Give me a complete, step-by-step recipe for "${mealName}"${cuisine?' ('+cuisine+' style)':''}.
+${time?'Cook time: '+time+'.':''}
+Ingredients available: ${ingList}.
+Dietary restrictions: ${restrictions}.
+Return ONLY a JSON array of steps — each step as a plain string, no numbering:
+["Step one text here","Step two text here",...]`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:SYSTEM_PROMPT,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await resp.json();
+    const steps=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    stepsField.value=steps.join('\n');
+    // Flip button visibility
+    genBtn.style.display='none';
+    regenBtn.style.display='block';
+    showToast(`✨ Recipe generated — ${steps.length} steps!`);
+  }catch(e){showToast('AI error — check your API key in Settings');}
+
+  genBtn.disabled=false;regenBtn.disabled=false;
+  genBtn.innerHTML=originalGenText;regenBtn.textContent=originalRegenText;
+};
+
+// ── PREFERENCES ───────────────────────────────────────────────
+window.togglePref=async function(el,type){const val=el.dataset.val;if(!prefs[type])prefs[type]=[];if(prefs[type].includes(val)){prefs[type]=prefs[type].filter(v=>v!==val);el.classList.remove('active');}else{prefs[type].push(val);el.classList.add('active');}save('prefs');if(window._db)await fsSet('prefs','main',prefs);};
+function renderPrefChips(){document.querySelectorAll('#restrictionChips .pref-chip').forEach(c=>c.classList.toggle('active',prefs.restrictions?.includes(c.dataset.val)));document.querySelectorAll('#loveChips .pref-chip').forEach(c=>c.classList.toggle('active',prefs.loves?.includes(c.dataset.val)));}
+window.saveApiKey=function(){const key=document.getElementById('apiKeyInput').value.trim();if(!key)return;localStorage.setItem('ok_apikey',key);showToast('API key saved!');};
+
+// ── UTILS ─────────────────────────────────────────────────────
+function save(key){const map={groceries,meals,prefs,planner,history};if(map[key]!==undefined)localStorage.setItem('ok_'+key,JSON.stringify(map[key]));}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+let toastTimer;
+window.showToast=function(msg){clearTimeout(toastTimer);let t=document.querySelector('.toast');if(t)t.remove();t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);toastTimer=setTimeout(()=>t.remove(),2800);};
+
+// ── INIT ──────────────────────────────────────────────────────
+renderGroceries();renderMeals();renderPrefChips();
+</script>
+</body>
+</html>
